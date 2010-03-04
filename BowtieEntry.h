@@ -41,7 +41,7 @@ public:
 
 	friend istream &operator>>(istream &stream, BowtieEntry &bt);
 
-	double mapping_probability();
+	long double mapping_probability();
 
 };
 

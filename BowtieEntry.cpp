@@ -75,8 +75,8 @@ vector<int> BowtieEntry::get_indices(string mismatchstring) {
 	return output;
 }
 
-double BowtieEntry::mapping_probability() {
-	double P;
+long double BowtieEntry::mapping_probability() {
+	long double P;
 
 	P = 1;
 

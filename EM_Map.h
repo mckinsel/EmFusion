@@ -18,7 +18,7 @@ public:
 	EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int);
 	virtual ~EM_Map();
 
-	double em_prob(long double);
+	long double em_prob(long double);
 
 	string base_read_id;
 	string isoform;
@@ -26,7 +26,7 @@ public:
 	int end;
 	double d;
 	int isoform_length;
-	double P;
+	long double P;
 };
 
 #endif /* EM_MAP_H_ */

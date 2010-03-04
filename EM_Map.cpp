@@ -27,6 +27,6 @@ EM_Map::~EM_Map() {
 	// TODO Auto-generated destructor stub
 }
 
-double EM_Map::em_prob(long double theta_i) {
-	return (1/(double)isoform_length)*P*theta_i*d;
+long double EM_Map::em_prob(long double theta_i) {
+	return (1/(long double)isoform_length)*P*theta_i*d;
 }

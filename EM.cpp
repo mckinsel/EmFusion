@@ -6,13 +6,10 @@
  */
 
 #include <fstream>
-#include <stdlib.h>
 #include <tr1/unordered_map>
 #include <string>
 #include <vector>
 #include <iostream>
-#include <string.h>
-#include <map>
 #include "EM_Map.h"
 #include "BowtieEntry.h"
 #include "Utils.h"
@@ -25,8 +22,6 @@ using namespace tr1;
 
 typedef tr1::unordered_map<string, vector<EM_Map*> > vectorumap;
 typedef tr1::unordered_map<string, long double > longdoubleumap;
-//typedef map<string, vector<EM_Map*> > vectorumap;
-//typedef map<string, long double > longdoubleumap;
 
 
 void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleumap & th, longdoubleumap & newth, int N){
@@ -39,7 +34,7 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 	int counter = 0;
 	for(read_iterator=read2emmap.begin(); read_iterator != read2emmap.end(); read_iterator++){
 
-		double sumread = 0;
+		long double sumread = 0;
 
 		string read_id = read_iterator->first;
 		vector<EM_Map*> emmaps = read_iterator->second;
@@ -47,6 +42,9 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 			sumread += emmaps.at(i)->em_prob(th[emmaps.at(i)->isoform]);
 		}
 		read_sums[read_id] += sumread;
+		if(sumread == 0){
+			cout << "Read " << read_id << " sumread is " << sumread << endl;
+		}
 		counter++;
 		if(counter % 500000 == 0) cout << counter << " reads processed." << endl;
 
@@ -55,7 +53,7 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 	counter = 0;
 	for(isoform_iterator=isoform2emmap.begin(); isoform_iterator != isoform2emmap.end(); isoform_iterator++){
 
-		double sumterm = 0;
+		long double sumterm = 0;
 		string isoform_id = isoform_iterator->first;
 		vector<EM_Map*> isoemmaps = isoform_iterator->second;
 		for(unsigned int i=0; i < isoemmaps.size(); i++){
@@ -63,7 +61,7 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 		}
 		newth[isoform_id] = sumterm/N;
 		counter++;
-		if(counter % 100000 == 0) cout << counter << " isoforms processed." << endl;
+		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
 
 	}
 
