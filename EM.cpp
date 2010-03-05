@@ -14,6 +14,7 @@
 #include "EM_Map.h"
 #include "BowtieEntry.h"
 #include "Utils.h"
+#include "MarkovChain.h"
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -25,6 +26,40 @@ typedef tr1::unordered_map<string, vector<EM_Map*> > vectorumap;
 typedef tr1::unordered_map<string, long double > longdoubleumap;
 typedef tr1::unordered_map<int, double> int2doubleumap;
 typedef tr1::unordered_map<string, int> string2intumap;
+
+double getMarkovChain(string filename, MarkovChain& mc) {
+
+	double log_unmapped_prob = 0;
+	string nextline;
+	string fullseq = "";
+	ifstream umfa(filename.c_str());
+
+	while(umfa >> nextline){
+		if(nextline.at(0) == '>' && fullseq.length() != 0){
+			mc.add_sequence(fullseq);
+			fullseq.clear();
+		} else {
+			fullseq.append(nextline);
+		}
+	}
+	mc.add_sequence(fullseq);
+
+	umfa.close();
+
+	ifstream umfa2(filename.c_str());
+
+	while(umfa >> nextline){
+			if(nextline.at(0) == '>' && fullseq.length() != 0){
+				log_unmapped_prob += log(mc.sequence_probability(fullseq));
+				fullseq.clear();
+			} else {
+				fullseq.append(nextline);
+			}
+		}
+	log_unmapped_prob += log(mc.sequence_probability(fullseq));
+
+	return log_unmapped_prob;
+}
 
 long double log_likelihood(vectorumap & read2emmap, longdoubleumap & th){
 
@@ -96,8 +131,14 @@ int main(int argc, char * argv[]){
 	char * btfilename = argv[1];
 	char * dist_prob_file = argv[2];
 	char * reference_fasta = argv[3];
-	int offset = atoi(argv[3]);
+	char * unmapped_fasta = argv[4];
+	int offset = atoi(argv[5]);
 
+//	Get Markov Chain for unmapped
+
+	MarkovChain mc(3, 5);
+	double log_unmapped_prob;
+	log_unmapped_prob = getMarkovChain(unmapped_fasta, mc);
 
 //	Get mapping distance distribution
 	int2doubleumap dist_prob;
