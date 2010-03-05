@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <cmath>
 #include "EM_Map.h"
 #include "BowtieEntry.h"
 #include "Utils.h"
@@ -22,8 +23,29 @@ using namespace tr1;
 
 typedef tr1::unordered_map<string, vector<EM_Map*> > vectorumap;
 typedef tr1::unordered_map<string, long double > longdoubleumap;
+typedef tr1::unordered_map<int, double> int2doubleumap;
+typedef tr1::unordered_map<string, int> string2intumap;
 
+long double log_likelihood(vectorumap & read2emmap, longdoubleumap & th){
 
+	long double log_score = 0;
+	vectorumap::iterator read_iterator;
+
+	for(read_iterator=read2emmap.begin(); read_iterator != read2emmap.end(); read_iterator++){
+		vector<EM_Map*> read_emmaps = read_iterator->second;
+
+		long double read_score = 0;
+
+		for(unsigned int i=0; i < read_emmaps.size(); i++){
+			read_score += read_emmaps.at(i)->em_prob(th[read_emmaps.at(i)->isoform]);
+		}
+		if(read_score == 0){
+			cout << read_iterator->first << endl;
+		}
+		log_score += log(read_score);
+	}
+	return log_score;
+}
 void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleumap & th, longdoubleumap & newth, int N){
 
 	longdoubleumap read_sums;
@@ -41,12 +63,12 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 		for(unsigned int i=0; i < emmaps.size(); i++){
 			sumread += emmaps.at(i)->em_prob(th[emmaps.at(i)->isoform]);
 		}
-		read_sums[read_id] += sumread;
+		read_sums[read_id] = sumread;
 		if(sumread == 0){
 			cout << "Read " << read_id << " sumread is " << sumread << endl;
 		}
 		counter++;
-		if(counter % 500000 == 0) cout << counter << " reads processed." << endl;
+//		if(counter % 500000 == 0) cout << counter << " reads processed." << endl;
 
 	}
 
@@ -61,7 +83,7 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 		}
 		newth[isoform_id] = sumterm/N;
 		counter++;
-		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
+//		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
 
 	}
 
@@ -72,7 +94,40 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 int main(int argc, char * argv[]){
 
 	char * btfilename = argv[1];
-	int offset = atoi(argv[2]);
+	char * dist_prob_file = argv[2];
+	char * reference_fasta = argv[3];
+	int offset = atoi(argv[3]);
+
+
+//	Get mapping distance distribution
+	int2doubleumap dist_prob;
+
+	ifstream dpstream(dist_prob_file);
+	string nextint, nextprob;
+
+	while(dpstream >> nextint){
+		dpstream >> nextprob;
+		dist_prob[atoi(nextint.c_str())] = atof(nextprob.c_str());
+	}
+
+//	Get gene lengths
+	string2intumap isoform_lengths;
+	string nextline;
+	int lengthcounter = 0;
+	string current_isoform = "nothing";
+	ifstream refstream(reference_fasta);
+	while(refstream >> nextline){
+		if(nextline.at(0) == '>'){
+			isoform_lengths[current_isoform] = lengthcounter;
+			current_isoform = nextline.substr(1, nextline.length()-1);
+			lengthcounter = 0;
+		} else {
+			lengthcounter += nextline.length();
+		}
+	}
+	isoform_lengths[current_isoform] = lengthcounter;
+
+//	Now iterate through bowtie file
 	ifstream btstream(btfilename);
 	BowtieEntry bt1(offset);
 	BowtieEntry bt2(offset); //Initialize with offset
@@ -93,7 +148,7 @@ int main(int argc, char * argv[]){
 		btstream >> bt2;
 
 		EM_Map * pemmap;
-		pemmap = new EM_Map(bt1, bt2, 10000); ///BADDDDDDDD, replace 10000
+		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
 
 		read_to_emmaps[pemmap->base_read_id].push_back(pemmap);
 		isoform_to_emmaps[pemmap->isoform].push_back(pemmap);
@@ -118,10 +173,17 @@ int main(int argc, char * argv[]){
 
 	cout << "Made first theta guess." << endl;
 	int count = 0;
+	long double log_diff = 9999;
+	long double oldll, newll;
 
-	while(count < 10){
+	while(log_diff > .01){
 		cout << "Starting iteration " << count << endl;
+		oldll = log_likelihood(read_to_emmaps, theta);
 		EM_Update(read_to_emmaps, isoform_to_emmaps, theta, newtheta, N);
+		newll = log_likelihood(read_to_emmaps, newtheta);
+		cout << " Old log likelihood is " << oldll << endl;
+		cout << " New log likelihood is " << newll << endl;
+		log_diff = abs(oldll - newll);
 		theta = newtheta;
 		count++;
 	}
