@@ -33,6 +33,9 @@ public:
 	double d;
 	int isoform_length;
 	long double P;
+
+protected:
+	EM_Map();
 };
 
 #endif /* EM_MAP_H_ */

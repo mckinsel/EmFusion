@@ -12,6 +12,7 @@
 #include <iostream>
 #include <cmath>
 #include "EM_Map.h"
+#include "Random_EM_Map.h"
 #include "BowtieEntry.h"
 #include "Utils.h"
 #include "MarkovChain.h"
@@ -35,9 +36,12 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 	ifstream umfa(filename.c_str());
 
 	while(umfa >> nextline){
-		if(nextline.at(0) == '>' && fullseq.length() != 0){
-			mc.add_sequence(fullseq);
-			fullseq.clear();
+		if(nextline.at(0) == '>'){
+			if(fullseq.length() != 0){
+				mc.add_sequence(fullseq);
+				fullseq.clear();
+			}
+
 		} else {
 			fullseq.append(nextline);
 		}
@@ -48,16 +52,18 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 
 	ifstream umfa2(filename.c_str());
 
-	while(umfa >> nextline){
-			if(nextline.at(0) == '>' && fullseq.length() != 0){
-				log_unmapped_prob += log(mc.sequence_probability(fullseq));
-				fullseq.clear();
+	while(umfa2 >> nextline){
+			if(nextline.at(0) == '>' ){
+				if(fullseq.length() != 0){
+					log_unmapped_prob += log(mc.sequence_probability(fullseq));
+					fullseq.clear();
+				}
 			} else {
 				fullseq.append(nextline);
 			}
 		}
 	log_unmapped_prob += log(mc.sequence_probability(fullseq));
-
+	umfa2.close();
 	return log_unmapped_prob;
 }
 
@@ -191,6 +197,13 @@ int main(int argc, char * argv[]){
 		EM_Map * pemmap;
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
 
+		read_iterator = read_to_emmaps.find(pemmap->base_read_id);
+		if(read_iterator == read_to_emmaps.end()){ //If it's the first time seeing the read.
+			Random_EM_Map * prem;
+			prem = new Random_EM_Map(bt1, bt2, mc);
+			read_to_emmaps[prem->base_read_id].push_back(prem);
+			isoform_to_emmaps[prem->isoform].push_back(prem);
+		}
 		read_to_emmaps[pemmap->base_read_id].push_back(pemmap);
 		isoform_to_emmaps[pemmap->isoform].push_back(pemmap);
 
@@ -199,6 +212,7 @@ int main(int argc, char * argv[]){
 		counter++;
 		if(counter%1000000==0) cout << counter << endl;
 	}
+
 
 	cout << "Bowtie reads read in." << endl;
 

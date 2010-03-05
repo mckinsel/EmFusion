@@ -24,10 +24,16 @@ EM_Map::EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int2doubleumap& d_prob, strin
 
 }
 
+EM_Map::EM_Map() {
+	start = -1;
+	end = -1;
+	d = 1;
+	isoform_length = 1;
+}
 EM_Map::~EM_Map() {
 	// TODO Auto-generated destructor stub
 }
 
 long double EM_Map::em_prob(long double theta_i) {
-	return (1/(long double)isoform_length)*P*d*theta_i*d;
+	return (1/(long double)isoform_length)*P*d*theta_i;
 }

@@ -7,10 +7,13 @@
 
 #include <assert.h>
 #include "MarkovChain.h"
+#include <iostream>
 
-MarkovChain::MarkovChain(int ord, int pseudo) {
+using namespace std;
 
-	order = order;
+MarkovChain::MarkovChain(unsigned int ord, int pseudo) {
+
+	order = ord;
 	pseudocount = pseudo;
 	total_count = 0;
 
@@ -21,15 +24,16 @@ MarkovChain::~MarkovChain() {
 }
 
 void MarkovChain::add_sequence(string seqtoadd) {
-
-	for(unsigned int i=0; i<seqtoadd.length()-order; i++){
+//	cout << seqtoadd.length() << " " << order << endl;
+//	cout << seqtoadd.length() - order << " " << seqtoadd << endl;
+	for(unsigned int i=0; i<seqtoadd.length() - order; i++){
 		string_counts[seqtoadd.substr(i, order)]++;
 		total_count++;
 	}
 }
 
 long double MarkovChain::ordermer_prob(string ordermer) {
-	assert((int)ordermer.length() == order);
+	assert(ordermer.length() == order);
 	return (string_counts[ordermer] + pseudocount)/(long double)total_count;
 }
 

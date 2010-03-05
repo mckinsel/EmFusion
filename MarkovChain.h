@@ -21,12 +21,12 @@ class MarkovChain {
 private:
 	umap string_counts;
 	int total_count;
-	int order;
+	unsigned int order;
 	int pseudocount;
 	long double ordermer_prob(string);
 
 public:
-	MarkovChain(int, int);
+	MarkovChain(unsigned int, int);
 	virtual ~MarkovChain();
 	long double sequence_probability(string);
 	void add_sequence(string);
