@@ -8,8 +8,8 @@
 #include "Read.h"
 
 Read::Read(string name, string seq, string qual, int offset) {
-	string id = name;
-	string sequence = seq;
+	id = name;
+	sequence = seq;
 	quality = new Quality(qual, offset);
 }
 

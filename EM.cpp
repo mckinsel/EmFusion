@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 #include "EM_Map.h"
 #include "Random_EM_Map.h"
@@ -46,6 +47,7 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 			fullseq.append(nextline);
 		}
 	}
+//	cout << "Adding last sequence " << fullseq << endl;
 	mc.add_sequence(fullseq);
 
 	umfa.close();
@@ -62,6 +64,7 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 				fullseq.append(nextline);
 			}
 		}
+//	cout << "Calculating last probability " << fullseq << endl;
 	log_unmapped_prob += log(mc.sequence_probability(fullseq));
 	umfa2.close();
 	return log_unmapped_prob;
@@ -210,7 +213,7 @@ int main(int argc, char * argv[]){
 		delete bt1.read;
 		delete bt2.read;
 		counter++;
-		if(counter%1000000==0) cout << counter << endl;
+		if(counter%1000000==0) cout << "Reading Bowtie pair " << counter << endl;
 	}
 
 
@@ -228,17 +231,17 @@ int main(int argc, char * argv[]){
 
 	cout << "Made first theta guess." << endl;
 	int count = 0;
-	long double log_diff = 9999;
+	long double log_diff = 1;
 	long double oldll, newll;
 
-	while(log_diff > .01){
+	while(log_diff > 1e-7){
 		cout << "Starting iteration " << count << endl;
 		oldll = log_likelihood(read_to_emmaps, theta);
 		EM_Update(read_to_emmaps, isoform_to_emmaps, theta, newtheta, N);
 		newll = log_likelihood(read_to_emmaps, newtheta);
 		cout << " Old log likelihood is " << oldll << endl;
 		cout << " New log likelihood is " << newll << endl;
-		log_diff = abs(oldll - newll);
+		log_diff = abs(oldll - newll)/abs(oldll);
 		theta = newtheta;
 		count++;
 	}
@@ -248,6 +251,11 @@ int main(int argc, char * argv[]){
 	for(longdoubleumap::iterator thiter=newtheta.begin(); thiter != newtheta.end(); thiter++){
 		outstream << thiter->first << "\t" << thiter->second << endl;
 	}
+
+	cout << "Final mapped log likelihood : " << setprecision(15) << newll << endl;
+	cout << "Unmapped log likelihood : " << setprecision(15) << log_unmapped_prob << endl;
+	cout << "Number of reads : " << N << endl;
+	cout << "Number of isoforms : " << M << endl;
 	return 0;
 
 }

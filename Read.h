@@ -18,7 +18,7 @@ public:
 	virtual ~Read();
 
 	string id;
-	string sequence_string;
+	string sequence;
 	Quality * quality;
 
 };

@@ -17,8 +17,8 @@ Random_EM_Map::Random_EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, MarkovChain& mc
 
 	P = 1;
 
-	P *= mc.sequence_probability(bt1.read->sequence_string);
-	P *= mc.sequence_probability(bt2.read->sequence_string);
+	P *= mc.sequence_probability(bt1.read->sequence);
+	P *= mc.sequence_probability(bt2.read->sequence);
 
 }
 
