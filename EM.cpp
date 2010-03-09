@@ -19,7 +19,6 @@
 #include "MarkovChain.h"
 
 using namespace std;
-using namespace __gnu_cxx;
 using namespace tr1;
 
 
