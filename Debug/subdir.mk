@@ -7,21 +7,27 @@ CPP_SRCS += \
 ../BowtieEntry.cpp \
 ../EM.cpp \
 ../EM_Map.cpp \
+../MarkovChain.cpp \
 ../Quality.cpp \
+../Random_EM_Map.cpp \
 ../Read.cpp 
 
 OBJS += \
 ./BowtieEntry.o \
 ./EM.o \
 ./EM_Map.o \
+./MarkovChain.o \
 ./Quality.o \
+./Random_EM_Map.o \
 ./Read.o 
 
 CPP_DEPS += \
 ./BowtieEntry.d \
 ./EM.d \
 ./EM_Map.d \
+./MarkovChain.d \
 ./Quality.d \
+./Random_EM_Map.d \
 ./Read.d 
 
 
