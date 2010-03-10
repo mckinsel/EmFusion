@@ -7,22 +7,31 @@ CPP_SRCS += \
 ../BowtieEntry.cpp \
 ../EM.cpp \
 ../EM_Map.cpp \
+../MarkovChain.cpp \
 ../Quality.cpp \
-../Read.cpp 
+../Random_EM_Map.cpp \
+../Read.cpp \
+../main.cpp 
 
 OBJS += \
 ./BowtieEntry.o \
 ./EM.o \
 ./EM_Map.o \
+./MarkovChain.o \
 ./Quality.o \
-./Read.o 
+./Random_EM_Map.o \
+./Read.o \
+./main.o 
 
 CPP_DEPS += \
 ./BowtieEntry.d \
 ./EM.d \
 ./EM_Map.d \
+./MarkovChain.d \
 ./Quality.d \
-./Read.d 
+./Random_EM_Map.d \
+./Read.d \
+./main.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

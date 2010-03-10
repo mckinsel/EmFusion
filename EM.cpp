@@ -17,6 +17,7 @@
 #include "BowtieEntry.h"
 #include "Utils.h"
 #include "MarkovChain.h"
+#include "main.h"
 
 using namespace std;
 using namespace tr1;
@@ -134,7 +135,7 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 
 
 
-int main(int argc, char * argv[]){
+int EM_main(int argc, char * argv[]){
 
 	char * btfilename = argv[1];
 	char * dist_prob_file = argv[2];
