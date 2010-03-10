@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #include "Read.h"
 #include "Utils.h"
@@ -23,6 +24,9 @@ using namespace std;
 class BowtieEntry {
 private:
 	vector<int> get_indices(string mismatchstring);
+	string _mapped_gene;
+	string _mapped_transcript;
+	void parse_mapping();
 
 public:
 	BowtieEntry (int);
@@ -42,6 +46,9 @@ public:
 	friend istream &operator>>(istream &stream, BowtieEntry &bt);
 
 	long double mapping_probability();
+
+	string mapped_gene();
+	string mapped_transcript();
 
 };
 

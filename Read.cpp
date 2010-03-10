@@ -49,3 +49,15 @@ istream& operator>>(istream &stream, Read& rd) {
 	rd.base_id.substr(0, id.size() - 2);
 	return stream;
 }
+
+void Read::write_as_fasta(ostream & stream) {
+	stream << ">" << id << endl;
+	stream << sequence << endl;
+}
+
+void Read::write_as_fastq(ostream & stream) {
+	stream << "@" << id << endl;
+	stream << sequence << endl;
+	stream << "+" << endl;
+	stream << quality->quality_str << endl;
+}

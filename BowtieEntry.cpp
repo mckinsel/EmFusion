@@ -11,6 +11,8 @@
 BowtieEntry::BowtieEntry(int offs) {
 
 	offset = offs;
+	_mapped_transcript = "";
+	_mapped_gene = "";
 }
 BowtieEntry::BowtieEntry(string read_name, string map, string orient, int pos, string seq,
 						 string qual, string mismatches, int off) {
@@ -23,6 +25,9 @@ BowtieEntry::BowtieEntry(string read_name, string map, string orient, int pos, s
 	offset = off;
 	read = new Read(read_id, seq, qual, offset);
 	mismatch_indices = get_indices(mismatches);
+
+	_mapped_transcript = "";
+	_mapped_gene = "";
 
 }
 
@@ -92,5 +97,30 @@ long double BowtieEntry::mapping_probability() {
 	}
 
 	return P;
+}
+
+string BowtieEntry::mapped_gene() {
+	if(_mapped_gene.length() > 0) {return _mapped_gene;}
+	else {parse_mapping(); return _mapped_gene;}
+}
+string BowtieEntry::mapped_transcript() {
+	if(_mapped_transcript.length() > 0) {return _mapped_transcript;}
+	else {parse_mapping(); return _mapped_transcript;}
+}
+
+void BowtieEntry::parse_mapping() {
+
+	char * maptok;
+	char * cstr;
+
+	cstr = new char [mapping.size() + 1];
+	strcpy(cstr, mapping.c_str());
+
+	maptok = strtok(cstr, "|");
+	_mapped_transcript = string(maptok);
+
+	maptok = strtok(NULL, "|");
+	_mapped_gene = string(maptok);
+
 
 }

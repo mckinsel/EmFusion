@@ -26,6 +26,9 @@ public:
 	Quality * quality;
 	int offset;
 
+	void write_as_fasta(ostream &stream);
+	void write_as_fastq(ostream &stream);
+
 	friend istream &operator>>(istream &stream, Read &rd);
 
 };
