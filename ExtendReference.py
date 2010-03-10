@@ -92,6 +92,19 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
 
 def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
     
+#    print len(eg1), len(eg2)
+#    print gene1, gene2
+#    print set(eg1.nodes()).intersection(eg2.nodes())
+#    for node in eg1.nodes():
+#        print node, eg1.node[node]
+#    for node in eg2.nodes():
+#        print node, eg2.node[node]
+#        
+#    for edge in eg1.edges_iter():
+#        print edge
+#    for edge in eg2.edges_iter():
+#        print edge
+    
     g1 = nx.union(eg1, eg2)
     
     for node1 in eg1.nodes():
@@ -166,7 +179,7 @@ def parse_tpdm_line(tpdmline):
 def clear_exon_graph(eg):
     
     for node in eg.nodes():
-        eg[node]['marked'] = False
+        eg.node[node]['marked'] = False
     
 def parse_line(efline):
     
@@ -204,19 +217,19 @@ def main(exonfilename, tpdmfilename):
         exon_d = parse_line(line)
         
         if exon_d['geneid'] != current_geneid:  ##If new gene
-            if current_geneid:  ##If we're not in the first record
-                exon_graph.add_edge(current_node, current_geneid + "sink") ##Close out the last transcript
-                exon_graph_d[current_geneid] = exon_graph  ##Put the eg in the dictionary
-            exon_graph = nx.DiGraph() ##Make a new exon_graph
-            exon_graph.add_node(exon_d['geneid'] + "source", marked = False, length = 0) ##Add its source and sink
-            exon_graph.add_node(exon_d['geneid'] + "sink", marked = False, length = 0)
-            current_node = exon_d['geneid'] + "source" ## Set the current node
             current_geneid = exon_d['geneid']
-                
+                            
         if exon_d['transcriptid'] != current_transcriptid:
-            if current_node != exon_d['geneid'] + "source": ##If we're not at a new gene
-                exon_graph.add_edge(current_node, exon_d['geneid'] + "sink") ##Close out the transcript
-            current_node = current_geneid + "source" ##Reset the current_node
+            
+            if current_transcriptid:
+                exon_graph.add_edge(current_node, current_transcriptid + "sink")
+                exon_graph_d[current_transcriptid] = exon_graph
+                
+            exon_graph = nx.DiGraph() ##Make a new exon_graph
+            exon_graph.add_node(exon_d['transcriptid'] + "source", marked = False, length = 0) ##Add its source and sink
+            exon_graph.add_node(exon_d['transcriptid'] + "sink", marked = False, length = 0)
+            
+            current_node = exon_d['transcriptid'] + "source"
             current_transcriptid = exon_d['transcriptid']
             position_in_transcript = 0
             transcript_to_exon[current_transcriptid] = [ [], [] ]
@@ -231,13 +244,14 @@ def main(exonfilename, tpdmfilename):
         position_in_transcript += exon_d['length']
         
         
-    exon_graph.add_edge(current_node, current_geneid + "sink")
-    exon_graph_d[current_geneid] = exon_graph
+    exon_graph.add_edge(current_node, current_transcriptid + "sink")
+    exon_graph_d[current_transcriptid] = exon_graph
     
 #===============================================================================
 #     Now, iterate through the tdpm file and mark mapped exons.
 #===============================================================================
     
+    current_transcript_pair = (None, None)
     current_gene_pair = (None, None)
     
     exon_graph1 = None
@@ -251,20 +265,20 @@ def main(exonfilename, tpdmfilename):
     for line in file(tpdmfilename):
         tpdm_d = parse_tpdm_line(line)
         
-        if (tpdm_d['gene1'],tpdm_d['gene2']) != current_gene_pair:
+        if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair:
             
-            if current_gene_pair[0]:
-                write_exon_orders(exon_graph1, exon_graph2, current_gene_pair[0], 
-                                  current_gene_pair[1], outef, marked1, marked2)
+            if current_transcript_pair[0]:
+                write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
+                                  current_transcript_pair[1], outef, marked1, marked2)
+                
             current_gene_pair = (tpdm_d['gene1'],tpdm_d['gene2'])
-            exon_graph1 = exon_graph_d[current_gene_pair[0]]
-            exon_graph2 = exon_graph_d[current_gene_pair[1]]
+            current_transcript_pair = (tpdm_d['transcript1'],tpdm_d['transcript2'])
             
-            for node in exon_graph1.nodes():
-                exon_graph1.node[node]['marked'] = False
+            exon_graph1 = exon_graph_d[current_transcript_pair[0]]
+            exon_graph2 = exon_graph_d[current_transcript_pair[1]]
             
-            for node in exon_graph2.nodes():
-                exon_graph2.node[node]['marked'] = False
+            clear_exon_graph(exon_graph1)
+            clear_exon_graph(exon_graph2)
                     
             marked1 = set()
             marked2 = set()
@@ -313,8 +327,8 @@ def main(exonfilename, tpdmfilename):
                    exon_graph2.node[t2_exons[i]]['marked'] = True
                    marked2.add(t2_exons[i])
 
-    write_exon_orders(exon_graph1, exon_graph2, current_gene_pair[0], 
-                                current_gene_pair[1], outef, marked1, marked2)    
+    write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
+                                current_transcript_pair[1], outef, marked1, marked2)    
         
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2])
