@@ -14,7 +14,6 @@ Quality::Quality(string q_str, int offs) {
 }
 
 Quality::~Quality() {
-	// TODO Auto-generated destructor stub
 }
 
 void Quality::calculate_error_probabilites(){
