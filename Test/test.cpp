@@ -1,8 +1,9 @@
 #include "../main.h"
 #include "../Quality.h"
+#include <fstream>
 #include <gtest/gtest.h>
 
-namespace {
+
 
 // The fixture for testing class Foo.
 class QualityTest : public ::testing::Test {
@@ -10,12 +11,19 @@ class QualityTest : public ::testing::Test {
 	Quality * q1;
 	Quality * q2;
 	Quality * q3;
-
+	string stl;
 
   QualityTest() {
 	  q1 = new Quality("ABCDEFGHIJKLMNOP", 0);
 	  q2 = new Quality("ABCDEFGHIJKLMNOP", 33);
-	  q3 = new Quality("\t \"~\r`", -10);
+
+	  ifstream quality_test_stream("QualityTest.txt");
+	  char tl[50];
+	  quality_test_stream.getline(tl, (streamsize)50);
+	  stl = string(tl);
+	  q3 = new Quality(stl, 64);
+
+
   }
 
   virtual ~QualityTest() {
@@ -25,7 +33,7 @@ class QualityTest : public ::testing::Test {
   }
 
 };
-}
+
 
 TEST_F(QualityTest, ConvertsCharToProb) {
 	EXPECT_DOUBLE_EQ(q1->error_probabilities.at(0), 0.0000003162277660168379191);
@@ -66,14 +74,16 @@ TEST_F(QualityTest, HandlesOffset) {
 }
 
 TEST_F(QualityTest, IgnoresEscapes) {
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(0), 0.000000000063095734448019424597);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(1), 0.000000000000251188643150958201);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(2), 0.000063095734448019292995787910);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(3), 0.000039810717055349694576925346);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(4), 0.000000000000025118864315095823);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(5), 0.000000000063095734448019424597);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(6), 0.000000000000398107170553496920);
-	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(7), 0.000000000025118864315095823148);
+	EXPECT_EQ(q3->quality_str.length(), 9);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(0), 0.00158489319246111408);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(1), 6.3095734448019296e-06);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(2), 1584.893192461114);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(3), 0.00158489319246111408);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(4), 1000.0000);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(5), 6.3095734448019296e-07);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(6), 0.00158489319246111408);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(7), 1.0000000000000001e-05);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(8), 316.22776601683796);
 }
 
 int Test_main(int argc, char * argv[]) {
