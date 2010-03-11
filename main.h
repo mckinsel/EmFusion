@@ -4,5 +4,6 @@
 
 int EM_main(int argc, char * argv[]);
 int Sift_main(int argc, char * argv[]);
+int Test_main(int argc, char * argv[]);
 
 #endif /* MAIN_H_ */
