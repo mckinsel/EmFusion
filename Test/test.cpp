@@ -65,6 +65,17 @@ TEST_F(QualityTest, HandlesOffset) {
 	EXPECT_DOUBLE_EQ(q2->error_probabilities.at(15), 0.00001995262314968879);
 }
 
+TEST_F(QualityTest, IgnoresEscapes) {
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(0), 0.000000000063095734448019424597);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(1), 0.000000000000251188643150958201);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(2), 0.000063095734448019292995787910);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(3), 0.000039810717055349694576925346);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(4), 0.000000000000025118864315095823);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(5), 0.000000000063095734448019424597);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(6), 0.000000000000398107170553496920);
+	EXPECT_DOUBLE_EQ(q3->error_probabilities.at(7), 0.000000000025118864315095823148);
+}
+
 int Test_main(int argc, char * argv[]) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
