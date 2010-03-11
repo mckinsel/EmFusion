@@ -17,7 +17,7 @@ class QualityTest : public ::testing::Test {
 	  q1 = new Quality("ABCDEFGHIJKLMNOP", 0);
 	  q2 = new Quality("ABCDEFGHIJKLMNOP", 33);
 
-	  ifstream quality_test_stream("QualityTest.txt");
+	  ifstream quality_test_stream("../Test/QualityTest.txt");
 	  char tl[50];
 	  quality_test_stream.getline(tl, (streamsize)50);
 	  stl = string(tl);
