@@ -21,7 +21,8 @@ int Sift_main(int argc, char * argv[]) {
 	int offset = atoi(argv[5]);
 
 	bool bustfiles;
-	char * bustfile1, * bustfile2;
+	char * bustfile1 = NULL;
+	char * bustfile2 = NULL;
 	if(argc == 8){
 		bustfiles = true;
 		bustfile1 = argv[6];
