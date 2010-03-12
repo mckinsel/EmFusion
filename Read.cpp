@@ -9,11 +9,16 @@
 
 Read::Read(int offs) {
 	offset = offs;
+	quality = NULL;
 }
 
 Read::Read(string name, string seq, string qual, int offs) {
-	id = name;
-	base_id.substr(0, id.size() - 2);
+	if(id[0] == '@') {
+		id = name.substr(1, name.length() - 1);
+	} else {
+		id = name;
+	}
+	base_id = id.substr(0, id.size() - 2);
 	sequence = seq;
 	quality = new Quality(qual, offs);
 	offset = offs;
@@ -31,8 +36,11 @@ istream& operator>>(istream &stream, Read& rd) {
 	string qual;
 
 	stream.getline(fastqline, (streamsize)1500);
+	while(fastqline[0] != '@'){
+		stream.getline(fastqline, (streamsize)1500);
+	}
 	assert(fastqline[0] == '@');
-	id = string(fastqline);
+	id = string(fastqline).substr(1, string(fastqline).length());
 
 	stream.getline(fastqline, (streamsize)1500);
 	seq = string(fastqline);
@@ -46,7 +54,7 @@ istream& operator>>(istream &stream, Read& rd) {
 	rd.id = id;
 	rd.sequence = seq;
 	rd.quality = new Quality(qual, rd.offset);
-	rd.base_id.substr(0, id.size() - 2);
+	rd.base_id = id.substr(0, id.size() - 2);
 	return stream;
 }
 

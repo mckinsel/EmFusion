@@ -13,8 +13,7 @@ CPP_SRCS += \
 ../Random_EM_Map.cpp \
 ../Read.cpp \
 ../Sift.cpp \
-../main.cpp \
-../test.cpp 
+../main.cpp 
 
 OBJS += \
 ./BowtieEntry.o \
@@ -26,8 +25,7 @@ OBJS += \
 ./Random_EM_Map.o \
 ./Read.o \
 ./Sift.o \
-./main.o \
-./test.o 
+./main.o 
 
 CPP_DEPS += \
 ./BowtieEntry.d \
@@ -39,8 +37,7 @@ CPP_DEPS += \
 ./Random_EM_Map.d \
 ./Read.d \
 ./Sift.d \
-./main.d \
-./test.d 
+./main.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

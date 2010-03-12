@@ -606,6 +606,10 @@
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.exe.release.66588000" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release"/>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.439918715" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
+<option id="gnu.cpp.link.option.libs.1290609234" superClass="gnu.cpp.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="gtest"/>
+<listOptionValue builtIn="false" value="gtest_main"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1149991948" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
