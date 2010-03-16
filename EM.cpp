@@ -35,8 +35,9 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 	string nextline;
 	string fullseq = "";
 	ifstream umfa(filename.c_str());
-
+//	cout << filename.c_str() << endl;
 	while(umfa >> nextline){
+		cout << nextline << endl;
 		if(nextline.at(0) == '>'){
 			if(fullseq.length() != 0){
 				mc.add_sequence(fullseq);
@@ -47,7 +48,7 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 			fullseq.append(nextline);
 		}
 	}
-//	cout << "Adding last sequence " << fullseq << endl;
+//	cout << "Adding last sequence to MarkovChain" << fullseq << endl;
 	mc.add_sequence(fullseq);
 
 	umfa.close();
@@ -55,6 +56,7 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 	ifstream umfa2(filename.c_str());
 
 	while(umfa2 >> nextline){
+			cout << nextline << endl;
 			if(nextline.at(0) == '>' ){
 				if(fullseq.length() != 0){
 					log_unmapped_prob += log(mc.sequence_probability(fullseq));
@@ -64,7 +66,7 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 				fullseq.append(nextline);
 			}
 		}
-//	cout << "Calculating last probability " << fullseq << endl;
+//	cout << "Calculating last probability in MarkovChain." << fullseq << endl;
 	log_unmapped_prob += log(mc.sequence_probability(fullseq));
 	umfa2.close();
 	return log_unmapped_prob;
@@ -143,12 +145,14 @@ int EM_main(int argc, char * argv[]){
 	char * unmapped_fasta = argv[4];
 	int offset = atoi(argv[5]);
 
+	cout << "Processed arguments." << endl;
 //	Get Markov Chain for unmapped
 
 	MarkovChain mc(3, 5);
 	double log_unmapped_prob;
 	log_unmapped_prob = getMarkovChain(unmapped_fasta, mc);
 
+	cout << "Built MarkovChain." << endl;
 //	Get mapping distance distribution
 	int2doubleumap dist_prob;
 
@@ -159,6 +163,8 @@ int EM_main(int argc, char * argv[]){
 		dpstream >> nextprob;
 		dist_prob[atoi(nextint.c_str())] = atof(nextprob.c_str());
 	}
+
+	cout << "Got distance probabilites." << endl;
 
 //	Get gene lengths
 	string2intumap isoform_lengths;

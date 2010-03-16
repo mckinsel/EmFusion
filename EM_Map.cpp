@@ -35,10 +35,10 @@ EM_Map::~EM_Map() {
 }
 
 long double EM_Map::em_prob(long double theta_i) {
-	cout << "theta_i " << theta_i << endl;
-	cout << "1/(long double)isoform_length " << (1/(long double)isoform_length) << endl;
-	cout << "P " << P << endl;
-	cout << "d " << d << endl;
+//	cout << "theta_i " << theta_i << endl;
+//	cout << "1/(long double)isoform_length " << (1/(long double)isoform_length) << endl;
+//	cout << "P " << P << endl;
+//	cout << "d " << d << endl;
 
 	return (1/(long double)isoform_length)*P*d*theta_i;
 }

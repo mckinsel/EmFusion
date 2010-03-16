@@ -52,5 +52,6 @@ long double MarkovChain::sequence_probability(string evalstring) {
 		}
 		prob *= ordermer_prob(evalstring.substr(i, order));
 	}
+	cout << "Evaluating MC probability of sequence " << evalstring << " and it's " << prob << endl;
 	return prob;
 }
