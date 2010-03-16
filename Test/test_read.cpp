@@ -102,6 +102,30 @@ TEST_F(ReadTest, InitializesValues) {
 	EXPECT_EQ(r2->offset, 64);
 }
 
+TEST_F(ReadTest, CalculatesQuality) {
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(0), 0.0000079432823472428217454);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(1), 0.0000079432823472428217454);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(2), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(3), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(4), 0.0000019952623149688787067);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(5), 0.0000019952623149688787067);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(6), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(7), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(8), 0.0000000050118723362727147);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(9), 0.0000000050118723362727147);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(10), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(11), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(12), 0.0000158489319246111412260);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(13), 0.0000158489319246111412260);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(14), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(15), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(16), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(17), 0.0006309573444801929841680);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(18), 0.0006309573444801929841680);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(19), 0.0000100000000000000008180);
+	EXPECT_DOUBLE_EQ(r1->quality->error_probabilities.at(20), 0.0000100000000000000008180);
+}
+
 TEST_F(ReadTest, ReadsFromFileStream) {
 	EXPECT_EQ(r3->id, "R:e\\dtes1ing3\\1");
 	EXPECT_EQ(r3->id.length(), 15);
@@ -133,5 +157,6 @@ TEST_F(ReadTest, WritesFASTQ) {
 	EXPECT_EQ(fastqline2, "ACTGACTGACTGACTGACTG");
 	EXPECT_EQ(fastqline3, "+");
 	EXPECT_EQ(fastqline4, "\\t\\t\\r\\n\\\"\\n\\r\\txxxx");
+	EXPECT_EQ(fastqline4.length(), 20);
 }
 }

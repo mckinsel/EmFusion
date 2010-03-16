@@ -26,6 +26,9 @@ istream& operator>>(istream &stream, FastaEntry& fa) {
 	char faline[1500];
 
 	stream.getline(faline, (streamsize)1500);
+	while(faline[0] != '>'){
+		stream.getline(faline, (streamsize)1500);
+	}
 	assert(faline[0] == '>');
 
 	string id = string(faline);

@@ -13,6 +13,10 @@ BowtieEntry::BowtieEntry(int offs) {
 	offset = offs;
 	_mapped_transcript = "";
 	_mapped_gene = "";
+	read = NULL;
+	position = -1;
+
+
 }
 BowtieEntry::BowtieEntry(string read_name, string map, string orient, int pos, string seq,
 						 string qual, string mismatches, int off) {
