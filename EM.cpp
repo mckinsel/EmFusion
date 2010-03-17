@@ -31,13 +31,15 @@ typedef tr1::unordered_map<string, int> string2intumap;
 
 double getMarkovChain(string filename, MarkovChain& mc) {
 
+//	First iterate through the unmapped file to build the MM
+//	Then, iterate through it again to calculate the probabilities
+//	of each of the unmapped sequences.
+
 	double log_unmapped_prob = 0;
 	string nextline;
 	string fullseq = "";
 	ifstream umfa(filename.c_str());
-//	cout << filename.c_str() << endl;
 	while(umfa >> nextline){
-		cout << nextline << endl;
 		if(nextline.at(0) == '>'){
 			if(fullseq.length() != 0){
 				mc.add_sequence(fullseq);
@@ -48,7 +50,6 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 			fullseq.append(nextline);
 		}
 	}
-//	cout << "Adding last sequence to MarkovChain" << fullseq << endl;
 	mc.add_sequence(fullseq);
 
 	umfa.close();
@@ -56,7 +57,6 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 	ifstream umfa2(filename.c_str());
 
 	while(umfa2 >> nextline){
-			cout << nextline << endl;
 			if(nextline.at(0) == '>' ){
 				if(fullseq.length() != 0){
 					log_unmapped_prob += log(mc.sequence_probability(fullseq));
@@ -66,7 +66,6 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 				fullseq.append(nextline);
 			}
 		}
-//	cout << "Calculating last probability in MarkovChain." << fullseq << endl;
 	log_unmapped_prob += log(mc.sequence_probability(fullseq));
 	umfa2.close();
 	return log_unmapped_prob;
@@ -99,8 +98,11 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 	vectorumap::iterator read_iterator;
 	vectorumap::iterator isoform_iterator;
 
+	//Calculate the denominators for the update rule.
 	int counter = 0;
 	for(read_iterator=read2emmap.begin(); read_iterator != read2emmap.end(); read_iterator++){
+
+//		Iterate through every read and find the sum of all of its mappings.
 
 		long double sumread = 0;
 
@@ -110,23 +112,24 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 			sumread += emmaps.at(i)->em_prob(th[emmaps.at(i)->isoform]);
 		}
 		read_sums[read_id] = sumread;
-		if(sumread == 0){
+		if(sumread == 0 || true){
 			cout << "Read " << read_id << " sumread is " << sumread << endl;
 		}
 		counter++;
-//		if(counter % 500000 == 0) cout << counter << " reads processed." << endl;
-
 	}
 
+//	Now actually calculate a new theta.
 	counter = 0;
 	for(isoform_iterator=isoform2emmap.begin(); isoform_iterator != isoform2emmap.end(); isoform_iterator++){
 
+//		Iterate through every isoform, including the random isoform.
 		long double sumterm = 0;
 		string isoform_id = isoform_iterator->first;
 		vector<EM_Map*> isoemmaps = isoform_iterator->second;
 		for(unsigned int i=0; i < isoemmaps.size(); i++){
 			sumterm += isoemmaps.at(i)->em_prob(th[isoform_id])/read_sums[isoemmaps.at(i)->base_read_id];
 		}
+		cout << "Isoform " << isoform_id << " sumterm is " << sumterm << endl;
 		newth[isoform_id] = sumterm/N;
 		counter++;
 //		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
@@ -153,6 +156,7 @@ int EM_main(int argc, char * argv[]){
 	log_unmapped_prob = getMarkovChain(unmapped_fasta, mc);
 
 	cout << "Built MarkovChain." << endl;
+
 //	Get mapping distance distribution
 	int2doubleumap dist_prob;
 
@@ -206,6 +210,9 @@ int EM_main(int argc, char * argv[]){
 		EM_Map * pemmap;
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
 
+
+		cout << "Looking at mapping of " << bt1.base_read_id << " to " << bt1.mapping << endl;
+		cout << "It has a mapping probability of " << pemmap->P << endl;
 		read_iterator = read_to_emmaps.find(pemmap->base_read_id);
 		if(read_iterator == read_to_emmaps.end()){ //If it's the first time seeing the read.
 			Random_EM_Map * prem;
@@ -240,7 +247,7 @@ int EM_main(int argc, char * argv[]){
 	long double log_diff = 1;
 	long double oldll, newll;
 
-	while(log_diff > 1e-7){
+	while(log_diff > 1e-10){
 		cout << "Starting iteration " << count << endl;
 		oldll = log_likelihood(read_to_emmaps, theta);
 		EM_Update(read_to_emmaps, isoform_to_emmaps, theta, newtheta, N);

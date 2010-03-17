@@ -24,8 +24,7 @@ MarkovChain::~MarkovChain() {
 }
 
 void MarkovChain::add_sequence(string seqtoadd) {
-//	cout << seqtoadd.length() << " " << order << endl;
-//	cout << seqtoadd.length() - order << " " << seqtoadd << endl;
+
 	for(unsigned int i=0; i<seqtoadd.length() - order; i++){
 		string_counts[seqtoadd.substr(i, order)]++;
 		total_count++;
@@ -37,7 +36,7 @@ long double MarkovChain::ordermer_prob(string ordermer) {
 		cout << "ordermer " << ordermer << endl;
 	}
 	assert(ordermer.length() == order);
-	return (string_counts[ordermer] + pseudocount)/(long double)total_count;
+	return (string_counts[ordermer] + pseudocount)/((long double)total_count + pseudocount);
 }
 
 long double MarkovChain::sequence_probability(string evalstring) {

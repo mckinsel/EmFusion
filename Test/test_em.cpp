@@ -3,13 +3,7 @@
 #include "../main.h"
 
 using namespace std;
-//int EM_main(int argc, char * argv[]){
-//
-//	char * btfilename = argv[1];
-//	char * dist_prob_file = argv[2];
-//	char * reference_fasta = argv[3];
-//	char * unmapped_fasta = argv[4];
-//	int offset = atoi(argv[5]);
+
 
 namespace {
 
@@ -20,7 +14,7 @@ protected:
 
 	EMTest () {
 		strcpy(btfilename, "../Test/EM_MapTest.txt");
-		strcpy(dist_prob_file, "../Test/EM_Test_distprob.txt");
+		strcpy(dist_prob_file, "../Test/EMTest_distprob.txt");
 		strcpy(reference_fasta, "../Test/EMTest_reference.txt");
 		strcpy(unmapped_fasta, "../Test/EMTest_unmapped.txt");
 	}
