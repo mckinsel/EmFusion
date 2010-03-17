@@ -112,9 +112,9 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 			sumread += emmaps.at(i)->em_prob(th[emmaps.at(i)->isoform]);
 		}
 		read_sums[read_id] = sumread;
-		if(sumread == 0 || true){
-			cout << "Read " << read_id << " sumread is " << sumread << endl;
-		}
+//		if(sumread == 0 || true){
+//			cout << "Read " << read_id << " sumread is " << sumread << endl;
+//		}
 		counter++;
 	}
 
@@ -129,7 +129,7 @@ void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleu
 		for(unsigned int i=0; i < isoemmaps.size(); i++){
 			sumterm += isoemmaps.at(i)->em_prob(th[isoform_id])/read_sums[isoemmaps.at(i)->base_read_id];
 		}
-		cout << "Isoform " << isoform_id << " sumterm is " << sumterm << endl;
+//		cout << "Isoform " << isoform_id << " sumterm is " << sumterm << endl;
 		newth[isoform_id] = sumterm/N;
 		counter++;
 //		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
@@ -211,8 +211,8 @@ int EM_main(int argc, char * argv[]){
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
 
 
-		cout << "Looking at mapping of " << bt1.base_read_id << " to " << bt1.mapping << endl;
-		cout << "It has a mapping probability of " << pemmap->P << endl;
+//		cout << "Looking at mapping of " << bt1.base_read_id << " to " << bt1.mapping << endl;
+//		cout << "It has a mapping probability of " << pemmap->P << endl;
 		read_iterator = read_to_emmaps.find(pemmap->base_read_id);
 		if(read_iterator == read_to_emmaps.end()){ //If it's the first time seeing the read.
 			Random_EM_Map * prem;

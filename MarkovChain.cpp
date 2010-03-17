@@ -43,7 +43,7 @@ long double MarkovChain::sequence_probability(string evalstring) {
 
 	long double prob = 1;
 	if(evalstring.length() < 10){
-	cout << "evalstring " << evalstring << " " << evalstring.length() << endl;
+//	cout << "evalstring " << evalstring << " " << evalstring.length() << endl;
 	}
 	for(unsigned int i=0; i<evalstring.length() - order; i++){
 		if(evalstring.length() < 10){
@@ -51,6 +51,6 @@ long double MarkovChain::sequence_probability(string evalstring) {
 		}
 		prob *= ordermer_prob(evalstring.substr(i, order));
 	}
-	cout << "Evaluating MC probability of sequence " << evalstring << " and it's " << prob << endl;
+//	cout << "Evaluating MC probability of sequence " << evalstring << " and it's " << prob << endl;
 	return prob;
 }

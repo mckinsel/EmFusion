@@ -18,7 +18,7 @@ EM_Map::EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int2doubleumap& d_prob, strin
 	start = min(bt1.position, bt2.position);
 	end = max(bt1.position, bt2.position);
 	isoform_length = i_length[isoform];
-	cout << "start " << start << " end " << end << " absdiff " << abs(start - end) << " d " << d_prob[abs(start - end)] <<endl;
+//	cout << "start " << start << " end " << end << " absdiff " << abs(start - end) << " d " << d_prob[abs(start - end)] <<endl;
 	d = d_prob[abs(start - end)];
 	P = bt1.mapping_probability() * bt2.mapping_probability();
 
