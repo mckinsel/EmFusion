@@ -61,8 +61,7 @@ def main(transcript_structure_file, exon_seq_file, num_of_fusions):
             exon_list.append(exonid)
     transcript_to_exons[curr_trans] = exon_list
     
-    print "read in transcript structures"
-    
+   
     assert set(transcript_to_exons.keys()) == set(transcript_to_gene.keys())
     
     ##Now make fusions randomly
@@ -76,7 +75,6 @@ def main(transcript_structure_file, exon_seq_file, num_of_fusions):
         gene1 = transcript_to_gene[trans1]
         gene2 = transcript_to_gene[trans2]
         if gene1 == gene2:
-            print trans1, trans2, gene1, gene2
             continue
         
         trans1_bound = random.choice(range(len(transcript_to_exons[trans1])))
@@ -90,8 +88,7 @@ def main(transcript_structure_file, exon_seq_file, num_of_fusions):
         fusions.append((fusion_id, fusion_exons))
         made_fusions += 1
         
-    print "Chose fusions"
-    print fusions
+
         
     esc = exon_seq_cont(exon_seq_file)
     
