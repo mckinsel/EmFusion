@@ -30,7 +30,13 @@ int Sift_main(int argc, char * argv[]) {
 	} else {
 		bustfiles = false;
 	}
-
+	cout << "Bowtiefile1 " << bowtiefile1 << endl;
+	cout << "Bowtiefile2 " << bowtiefile2 << endl;
+	cout << "fastqfile1 " << fastqfile1 << endl;
+	cout << "fastqfile2 " << fastqfile2 << endl;
+	cout << "bustfile1 " << bustfile1 << endl;
+	cout << "bustfile2 " << bustfile2 << endl;
+	cout << "offset " << offset << endl;
 //	For now, we'll just assume that these are all sorted.
 //	In the future, we should implement an external sort here.
 //	Or not, it probably doesn't matter.
@@ -44,15 +50,14 @@ int Sift_main(int argc, char * argv[]) {
 	ifstream buststream1;
 	ifstream buststream2;
 
-	ofstream mapping_distance_stream(strcat(fastqfile1, ".mapdist"));
-	ofstream discordant_mapping_stream(strcat(fastqfile1, ".discord"));
-	ofstream unmapped_fasta_stream(strcat(fastqfile1, ".unmapped.fasta"));
-
-
 	if(bustfiles) {
 		buststream1.open(bustfile1);
 		buststream2.open(bustfile2);
 	}
+
+	ofstream mapping_distance_stream(strcat(fastqfile1, ".mapdist"));
+	ofstream discordant_mapping_stream(strcat(fastqfile1, ".discord"));
+	ofstream unmapped_fasta_stream(strcat(fastqfile1, ".unmapped.fasta"));
 
 	Read read1(offset);
 	Read read2(offset);
@@ -74,22 +79,33 @@ int Sift_main(int argc, char * argv[]) {
 	while(fastqstream1 >> read1 && !fastqstream1.eof()) {
 		fastqstream2 >> read2;
 
+		cout << "working on read " << read1.base_id << " " << read2.base_id << endl;
+
 		if(bustfiles){
+			cout << "Now looking in repeat files" << endl;
 			while(cur_bust1_id.compare(read1.id) < 0 && !buststream1.eof()){
+				cout << "Getting next record from repeat file 1" << endl;
 				buststream1 >> bust1;
 				cur_bust1_id = bust1.id;
+				cout << "reading from repeat file 1 " << bust1.id << endl;
 			}
 
 			while(cur_bust2_id.compare(read2.id) < 0 && !buststream2.eof()){
 				buststream2 >> bust2;
 				cur_bust2_id = bust2.id;
+				cout << "reading from repeat file 2 " << bust2.id << endl;
 			}
 		}
 
-		if(cur_bust1_id == read1.id || cur_bust2_id == read2.id) continue;
+		if(cur_bust1_id == read1.id || cur_bust2_id == read2.id) {
+			cout << "Match in repeat found, so continuing" << endl;
+			continue;
+		}
 
 		clear_bowtie_vector(bowtieentries1);
 		clear_bowtie_vector(bowtieentries2);
+
+		cout << "Bowtie entry vectors cleared" << endl;
 
 		if(bte1->read_id == read1.id){ //See if there's a good match from the last iteration
 			bowtieentries1.push_back(bte1);
@@ -120,6 +136,8 @@ int Sift_main(int argc, char * argv[]) {
 			cur_bowtie2_id = bte2->read_id;
 
 		}
+		cout << "Bowtie entries have been read in." << endl;
+		cout << cur_bowtie1_id << " " << cur_bowtie2_id << endl;
 
 		if(bowtieentries1.size() > 0 && bowtieentries2.size() > 0){ //If both ends of the mate pair have mappings
 			vector<string> genes1;
