@@ -31,7 +31,7 @@ istream& operator>>(istream &stream, FastaEntry& fa) {
 	}
 	assert(faline[0] == '>');
 
-	string id = string(faline);
+	string id = string(faline).substr(1, string(faline).length() - 1);
 
 	stream.getline(faline, (streamsize) 1500);
 

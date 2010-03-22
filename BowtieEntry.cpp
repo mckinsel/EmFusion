@@ -15,6 +15,8 @@ BowtieEntry::BowtieEntry(int offs) {
 	_mapped_gene = "";
 	read = NULL;
 	position = -1;
+	read_id = "";
+	base_read_id = "";
 
 
 }
@@ -117,6 +119,7 @@ void BowtieEntry::parse_mapping() {
 	char * maptok;
 	char * cstr;
 
+	cout << "Parsing a mapping: " << mapping << endl;
 	cstr = new char [mapping.size() + 1];
 	strcpy(cstr, mapping.c_str());
 
