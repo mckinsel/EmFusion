@@ -217,5 +217,9 @@ int Sift_main(int argc, char * argv[]) {
 			read2.write_as_fasta(unmapped_fasta_stream);
 		}
 	}
+	delete bte1;
+	delete bte2;
+	clear_bowtie_vector(bowtieentries1);
+	clear_bowtie_vector(bowtieentries2);
 	return 0;
 }

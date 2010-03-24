@@ -38,18 +38,15 @@ BowtieEntry::BowtieEntry(string read_name, string map, string orient, int pos, s
 }
 
 BowtieEntry::~BowtieEntry() {
-	// TODO Auto-generated destructor stub
+	delete read;
 }
 
 istream& operator>>(istream &stream, BowtieEntry& bt) {
 	char btline[1500];
 	vector<string> lineparts;
 	string mms;
-//	cout << stream.eof() << endl;
 
 	stream.getline(btline, (streamsize)1500);
-//	cout << "btline " << btline << endl;
-//	cout << stream.eof() << endl;
 	myTokenize(string(btline), lineparts, "\t");
 
 	if (lineparts.size() == 8){
@@ -57,12 +54,13 @@ istream& operator>>(istream &stream, BowtieEntry& bt) {
 	} else {
 		mms = "";
 	}
-	if(lineparts.size()>6){
+	if(lineparts.size()>6 && !stream.eof()){
 	bt.read_id = lineparts[0];
 	bt.base_read_id = bt.read_id.substr(0, bt.read_id.size() - 2);
 	bt.mapping = lineparts[2];
 	bt.strand = lineparts[1];
 	bt.position = (int)atoi(lineparts.at(3).c_str());
+	delete bt.read;
 	bt.read = new Read(lineparts[0], lineparts[4], lineparts[5], bt.offset);
 	bt.mismatch_indices = bt.get_indices(mms);
 	}
@@ -126,6 +124,8 @@ void BowtieEntry::parse_mapping() {
 
 	maptok = strtok(NULL, "|");
 	_mapped_gene = string(maptok);
+
+	delete[] cstr;
 
 
 }
