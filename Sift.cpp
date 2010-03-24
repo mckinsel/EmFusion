@@ -210,11 +210,9 @@ int Sift_main(int argc, char * argv[]) {
 			read2.write_as_fasta(unmapped_fasta_stream);
 		}
 
-//		cout << "At end of loop, bowtieentries1 has " << endl;
-//		print_bt_vector(bowtieentries1);
-//		cout << "At end of loop, bowtieentries2 has " << endl;
-//		print_bt_vector(bowtieentries2);
 	}
+
+//	Get valgrind clean:
 	delete bte1;
 	delete bte2;
 	clear_bowtie_vector(bowtieentries1);
