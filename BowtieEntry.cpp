@@ -38,7 +38,7 @@ BowtieEntry::BowtieEntry(string read_name, string map, string orient, int pos, s
 }
 
 BowtieEntry::~BowtieEntry() {
-//	delete read;
+	delete read;
 }
 
 istream& operator>>(istream &stream, BowtieEntry& bt) {
@@ -60,7 +60,7 @@ istream& operator>>(istream &stream, BowtieEntry& bt) {
 	bt.mapping = lineparts[2];
 	bt.strand = lineparts[1];
 	bt.position = (int)atoi(lineparts.at(3).c_str());
-	//delete bt.read;
+	delete bt.read;
 	bt.read = new Read(lineparts[0], lineparts[4], lineparts[5], bt.offset);
 	bt.mismatch_indices = bt.get_indices(mms);
 	}

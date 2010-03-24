@@ -5,10 +5,10 @@
 #include "FastaEntry.h"
 #include "Read.h"
 
+
 void clear_bowtie_vector(vector<BowtieEntry*> & btv) {
 	for(unsigned int i = 0; i < btv.size(); i++) {
-		delete btv[i]->read;
-		delete btv[i];
+		delete btv.at(i);
 	}
 	btv.clear();
 }
@@ -38,9 +38,7 @@ int Sift_main(int argc, char * argv[]) {
 	cout << "bustfile1 " << bustfile1 << endl;
 	cout << "bustfile2 " << bustfile2 << endl;
 	cout << "offset " << offset << endl;
-//	For now, we'll just assume that these are all sorted.
-//	In the future, we should implement an external sort here.
-//	Or not, it probably doesn't matter.
+
 
 	ifstream bowtiestream1(bowtiefile1);
 	ifstream bowtiestream2(bowtiefile2);
@@ -84,41 +82,32 @@ int Sift_main(int argc, char * argv[]) {
 	int iter_counter = 0;
 
 	while(fastqstream1 >> read1 && fastqstream2 >> read2) {
+
 		++iter_counter;
-		if(iter_counter % 10000 == 0) {
+		if(iter_counter % 100000 == 0) {
 			cout << "Working on read " << iter_counter << endl;
 		}
-//		cout << "working on read " << read1.base_id << " " << read2.base_id << endl;
 
 		if(bustfiles){
-//			cout << "Now looking in repeat files" << endl;
 			while(cur_bust1_id.compare(read1.id) < 0 && buststream1 >> bust1){
-//				cout << "Getting next record from repeat file 1" << endl;
 				cur_bust1_id = bust1.id;
-//				cout << "reading from repeat file 1 " << bust1.id << endl;
 			}
 
 			while(cur_bust2_id.compare(read2.id) < 0 && buststream2 >> bust2){
 				cur_bust2_id = bust2.id;
-//				cout << "reading from repeat file 2 " << bust2.id << endl;
 			}
 		}
 
 		if(cur_bust1_id == read1.id || cur_bust2_id == read2.id) {
-//			cout << "Match in repeat found, so continuing" << endl;
 			continue;
 		}
 
 		clear_bowtie_vector(bowtieentries1);
 		clear_bowtie_vector(bowtieentries2);
 
-//		cout << "Bowtie entry vectors cleared" << endl;
-
 		if(bte1->read_id == read1.id){ //See if there's a good match from the last iteration
 			bowtieentries1.push_back(bte1);
 			bte1 = new BowtieEntry(offset);
-		} else {
-			delete bte1->read;
 		}
 
 		while(cur_bowtie1_id.compare(read1.id) <= 0 && bowtiestream1 >> *bte1) {
@@ -131,10 +120,9 @@ int Sift_main(int argc, char * argv[]) {
 		}
 
 		if(bte2->read_id == read2.id){ //See if there's a good match from the last iteration
+//			cout << "Adding bte2 to bowtieentries2 " << bte1 << endl;
 			bowtieentries2.push_back(bte2);
 			bte2 = new BowtieEntry(offset);
-		} else {
-			delete bte2->read;
 		}
 
 		while(cur_bowtie2_id.compare(read2.id) <= 0 && bowtiestream2 >> *bte2) {
@@ -143,8 +131,8 @@ int Sift_main(int argc, char * argv[]) {
 				bte2 = new BowtieEntry(offset);
 			}
 			cur_bowtie2_id = bte2->read_id;
-
 		}
+
 //		cout << "Bowtie entries have been read in." << endl;
 //		cout << "Current BT entries are: " << cur_bowtie1_id << " " << cur_bowtie2_id << endl;
 
@@ -187,7 +175,7 @@ int Sift_main(int argc, char * argv[]) {
 					}
 				}
 			} else { //Only discordant mappings
-
+				cout << "Only discordant" << endl;
 //				Write out discordant mappings
 				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
 					for(unsigned int j = 0; j < bowtieentries2.size(); j++){
@@ -221,6 +209,11 @@ int Sift_main(int argc, char * argv[]) {
 			read1.write_as_fasta(unmapped_fasta_stream);
 			read2.write_as_fasta(unmapped_fasta_stream);
 		}
+
+//		cout << "At end of loop, bowtieentries1 has " << endl;
+//		print_bt_vector(bowtieentries1);
+//		cout << "At end of loop, bowtieentries2 has " << endl;
+//		print_bt_vector(bowtieentries2);
 	}
 	delete bte1;
 	delete bte2;

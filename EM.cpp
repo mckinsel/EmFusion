@@ -222,8 +222,8 @@ int EM_main(int argc, char * argv[]){
 		read_to_emmaps[pemmap->base_read_id].push_back(pemmap);
 		isoform_to_emmaps[pemmap->isoform].push_back(pemmap);
 
-		delete bt1.read;
-		delete bt2.read;
+//		delete bt1.read;
+//		delete bt2.read;
 		counter++;
 		if(counter%1000000==0) cout << "Reading Bowtie pair " << counter << endl;
 	}

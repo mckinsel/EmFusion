@@ -25,6 +25,7 @@ Read::Read(string name, string seq, string qual, int offs) {
 }
 
 Read::~Read() {
+//	cout << "Deleting a read" << endl;
 	delete quality;
 }
 
