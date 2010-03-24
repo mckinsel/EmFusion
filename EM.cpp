@@ -248,12 +248,14 @@ int EM_main(int argc, char * argv[]){
 	long double oldll, newll;
 
 	while(log_diff > 1e-10){
-		cout << "Starting iteration " << count << endl;
 		oldll = log_likelihood(read_to_emmaps, theta);
 		EM_Update(read_to_emmaps, isoform_to_emmaps, theta, newtheta, N);
 		newll = log_likelihood(read_to_emmaps, newtheta);
-		cout << " Old log likelihood is " << oldll << endl;
-		cout << " New log likelihood is " << newll << endl;
+		if(count % 10 == 0){
+			cout << "Starting iteration " << count << endl;
+			cout << " Old log likelihood is " << oldll << endl;
+			cout << " New log likelihood is " << newll << endl;
+		}
 		log_diff = abs(oldll - newll)/abs(oldll);
 		theta = newtheta;
 		count++;

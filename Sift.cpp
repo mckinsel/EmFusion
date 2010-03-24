@@ -55,9 +55,13 @@ int Sift_main(int argc, char * argv[]) {
 		buststream2.open(bustfile2);
 	}
 
-	ofstream mapping_distance_stream(strcat(fastqfile1, ".mapdist"));
-	ofstream discordant_mapping_stream(strcat(fastqfile1, ".discord"));
-	ofstream unmapped_fasta_stream(strcat(fastqfile1, ".unmapped.fasta"));
+	char outfile[250];
+	strcpy(outfile, fastqfile1);
+	ofstream mapping_distance_stream(strcat(outfile, ".mapdist"));
+	strcpy(outfile, fastqfile1);
+	ofstream discordant_mapping_stream(strcat(outfile, ".discord"));
+	strcpy(outfile, fastqfile1);
+	ofstream unmapped_fasta_stream(strcat(outfile, ".unmapped.fasta"));
 
 	Read read1(offset);
 	Read read2(offset);
@@ -190,12 +194,12 @@ int Sift_main(int argc, char * argv[]) {
 							discordant_mapping_stream << bowtieentries1.at(i)->position << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->position << endl;
 						} else if (bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) > 0) {
-							discordant_mapping_stream << bowtieentries2.at(i)->mapped_transcript() << "\t";
-							discordant_mapping_stream << bowtieentries1.at(j)->mapped_transcript() << "\t";
-							discordant_mapping_stream << bowtieentries2.at(i)->mapped_gene() << "\t";
-							discordant_mapping_stream << bowtieentries1.at(j)->mapped_gene() << "\t";
-							discordant_mapping_stream << bowtieentries2.at(i)->position << "\t";
-							discordant_mapping_stream << bowtieentries1.at(j)->position << endl;
+							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
+							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
+							discordant_mapping_stream << bowtieentries2.at(j)->mapped_gene() << "\t";
+							discordant_mapping_stream << bowtieentries1.at(i)->mapped_gene() << "\t";
+							discordant_mapping_stream << bowtieentries2.at(j)->position << "\t";
+							discordant_mapping_stream << bowtieentries1.at(i)->position << endl;
 						} else {
 							cout << "THE PROGRAM IS BROKEN!" << endl;
 							exit(1);
