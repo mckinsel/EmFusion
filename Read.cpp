@@ -36,9 +36,11 @@ istream& operator>>(istream &stream, Read& rd) {
 	string qual;
 
 	stream.getline(fastqline, (streamsize)1500);
-	while(fastqline[0] != '@'){
+	while(fastqline[0] != '@' && !stream.eof()){
 		stream.getline(fastqline, (streamsize)1500);
 	}
+
+	if(stream.eof()) return stream;
 	assert(fastqline[0] == '@');
 	id = string(fastqline).substr(1, string(fastqline).length());
 

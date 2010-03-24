@@ -61,7 +61,6 @@ istream& operator>>(istream &stream, BowtieEntry& bt) {
 	bt.read_id = lineparts[0];
 	bt.base_read_id = bt.read_id.substr(0, bt.read_id.size() - 2);
 	bt.mapping = lineparts[2];
-//	cout << "mapping " << bt.mapping <<endl;
 	bt.strand = lineparts[1];
 	bt.position = (int)atoi(lineparts.at(3).c_str());
 	bt.read = new Read(lineparts[0], lineparts[4], lineparts[5], bt.offset);
@@ -119,7 +118,6 @@ void BowtieEntry::parse_mapping() {
 	char * maptok;
 	char * cstr;
 
-	cout << "Parsing a mapping: " << mapping << endl;
 	cstr = new char [mapping.size() + 1];
 	strcpy(cstr, mapping.c_str());
 
