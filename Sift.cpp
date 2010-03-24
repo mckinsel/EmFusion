@@ -117,6 +117,8 @@ int Sift_main(int argc, char * argv[]) {
 		if(bte1->read_id == read1.id){ //See if there's a good match from the last iteration
 			bowtieentries1.push_back(bte1);
 			bte1 = new BowtieEntry(offset);
+		} else {
+			delete bte1->read;
 		}
 
 		while(cur_bowtie1_id.compare(read1.id) <= 0 && bowtiestream1 >> *bte1) {
@@ -131,6 +133,8 @@ int Sift_main(int argc, char * argv[]) {
 		if(bte2->read_id == read2.id){ //See if there's a good match from the last iteration
 			bowtieentries2.push_back(bte2);
 			bte2 = new BowtieEntry(offset);
+		} else {
+			delete bte2->read;
 		}
 
 		while(cur_bowtie2_id.compare(read2.id) <= 0 && bowtiestream2 >> *bte2) {
