@@ -7,6 +7,7 @@
 
 void clear_bowtie_vector(vector<BowtieEntry*> & btv) {
 	for(unsigned int i = 0; i < btv.size(); i++) {
+		delete btv[i]->read;
 		delete btv[i];
 	}
 	btv.clear();

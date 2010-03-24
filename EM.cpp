@@ -204,8 +204,7 @@ int EM_main(int argc, char * argv[]){
 
 
 
-	while(btstream >> bt1 && !btstream.eof()){
-		btstream >> bt2;
+	while(btstream >> bt1 && btstream >> bt2){
 
 		EM_Map * pemmap;
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
