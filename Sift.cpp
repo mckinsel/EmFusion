@@ -84,7 +84,7 @@ int Sift_main(int argc, char * argv[]) {
 	while(fastqstream1 >> read1 && fastqstream2 >> read2) {
 
 		++iter_counter;
-		if(iter_counter % 100000 == 0) {
+		if(iter_counter % 1000000 == 0) {
 			cout << "Working on read " << iter_counter << endl;
 		}
 
@@ -152,30 +152,26 @@ int Sift_main(int argc, char * argv[]) {
 			sort(genes2.begin(), genes2.end());
 
 			for(unsigned int i = 0; i < genes1.size(); i++) {
-//				cout << "Genes1 : " << genes1.at(i) << endl;
 			}
 
 			for(unsigned int i = 0; i < genes2.size(); i++) {
-//				cout << "Genes2 : " << genes2.at(i) << endl;
 			}
 			vector<string> g_intersection(genes1.size() + genes2.size());
 			vector<string>::iterator end_it;
 			end_it = set_intersection(genes1.begin(), genes1.end(), genes2.begin(), genes2.end(), g_intersection.begin());
 
-//			cout << "int(end_it - g_intersection.begin()) " << int(end_it - g_intersection.begin()) << endl;
 			if (int(end_it - g_intersection.begin()) > 0){ //There is at least one concordant mapping
 
 //				Write out distances between mappings on the same transcript, if there are any.
 				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
 					for(unsigned int j = 0; j < bowtieentries2.size(); j++){
 						if(bowtieentries1.at(i)->mapped_transcript() == bowtieentries2.at(j)->mapped_transcript()) {
-//							cout << "Writing out pair " << bowtieentries1.at(i)->mapped_transcript() << " " << bowtieentries2.at(j)->mapped_transcript() << endl;
 							mapping_distance_stream << abs(bowtieentries1.at(i)->position - bowtieentries2.at(j)->position) << endl;
 						}
 					}
 				}
 			} else { //Only discordant mappings
-				cout << "Only discordant" << endl;
+//				cout << "Only discordant" << endl;
 //				Write out discordant mappings
 				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
 					for(unsigned int j = 0; j < bowtieentries2.size(); j++){
