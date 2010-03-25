@@ -15,11 +15,11 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
     
     fail = False
     
-    print "visiting node %s in graph %d" % (v, g.node[v]['graph'])
-    print "sinkname %s" % sinkname
-    print "marked1_set", marked1_set
-    print "marked2_set", marked2_set
-    print "exon_list", exon_list
+#    print "visiting node %s in graph %d" % (v, g.node[v]['graph'])
+#    print "sinkname %s" % sinkname
+#    print "marked1_set", marked1_set
+#    print "marked2_set", marked2_set
+#    print "exon_list", exon_list
     
 #===============================================================================
 #     Check if we've passed marked nodes and if so, how long between marked1 and
@@ -40,12 +40,12 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
     else:
         m_d = int(marked_distance)
 
-    print "marked1 %d ismarked1 %d" %(marked1, ismarked1)
-    print "marked2 %d ismarked2 %d" %(marked2, ismarked2)
-    print "m_d %d" % m_d
+#    print "marked1 %d ismarked1 %d" %(marked1, ismarked1)
+#    print "marked2 %d ismarked2 %d" %(marked2, ismarked2)
+#    print "m_d %d" % m_d
     
     if m_d > MAX_MARK_LENGTH:
-        print "FAILING due to m_d %d > MAX_MARK_LENGTH %d" % (m_d, MAX_MARK_LENGTH)
+#        print "FAILING due to m_d %d > MAX_MARK_LENGTH %d" % (m_d, MAX_MARK_LENGTH)
         fail = True
     
 #===============================================================================
@@ -53,7 +53,7 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
 #     nodes in the first.
 #===============================================================================
     if g.node[v]['graph'] == 2 and seenmarked1 != marked1_set:
-        print "FAILING due to getting to graph 2 before hitting marked1_set"
+#        print "FAILING due to getting to graph 2 before hitting marked1_set"
         fail = True
 
     
@@ -63,10 +63,10 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
 #===============================================================================
     
     if v == sinkname:
-        print "reached sink!"
-        print exon_list
-        print seenmarked1
-        print seenmarked2
+#        print "reached sink!"
+#        print exon_list
+#        print seenmarked1
+#        print seenmarked2
         if seenmarked1 == marked1_set and seenmarked2 == marked2_set:
             outfileh.write('\t'.join(exon_list[1:]))
             outfileh.write('\n')
@@ -125,9 +125,9 @@ def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
                 g1.add_edge(node1, node2)
                 
 
-    print 'eg1', eg1.node
-    print 'eg2', eg2.node
-    print 'g1', g1.node
+#    print 'eg1', eg1.node
+#    print 'eg2', eg2.node
+#    print 'g1', g1.node
     dfs(gene1 + "source", g1, gene2 + "sink", marked1, marked2, outfileh)
     
     ##############################################################
@@ -167,10 +167,10 @@ def parse_tpdm_line(tpdmline):
     out = {}
     ts = tpdmline.strip().split('\t')
     
-    out['gene1'] = ts[0]
-    out['gene2'] = ts[1]
-    out['transcript1'] = ts[2]
-    out['transcript2'] = ts[3]
+    out['gene1'] = ts[2]
+    out['gene2'] = ts[3]
+    out['transcript1'] = ts[0]
+    out['transcript2'] = ts[1]
     out['pos1'] = int(ts[4])
     out['pos2'] = int(ts[5])
     
