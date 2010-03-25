@@ -1,0 +1,1 @@
+Trans1	Trans2	Exon14	Exon24	1	1
