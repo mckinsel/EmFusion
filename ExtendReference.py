@@ -191,7 +191,7 @@ def parse_line(efline):
     out['exonid'] = lseq[4]
     out['start'] = int(lseq[5])
     out['end'] = int(lseq[6])
-    out['length'] = abs(out['start'] - out['end'])
+    out['length'] = abs(out['start'] - out['end']) + 1
 
     return out
 
@@ -273,7 +273,7 @@ def main(exonfilename, tpdmfilename):
                 
             current_gene_pair = (tpdm_d['gene1'],tpdm_d['gene2'])
             current_transcript_pair = (tpdm_d['transcript1'],tpdm_d['transcript2'])
-            
+
             exon_graph1 = exon_graph_d[current_transcript_pair[0]]
             exon_graph2 = exon_graph_d[current_transcript_pair[1]]
             
@@ -287,23 +287,33 @@ def main(exonfilename, tpdmfilename):
 #         the start site of the kth exon.
 #===============================================================================
         
+#        print "We're working with " + tpdm_d['transcript1'] + " and " +\
+#            tpdm_d['transcript2']
         
         t1_bounds, t1_exons = transcript_to_exon[tpdm_d['transcript1']]
         assert len(t1_bounds) == len(t1_exons)
 
+#        print "The bounds and exons of transcript1 are ", t1_bounds, t1_exons
+        
         read_bound1_start = tpdm_d['pos1']
         read_bound1_end = tpdm_d['pos1'] + READ_LENGTH
         
+#        print "read_bound1_start ", read_bound1_start
+#        print "read_bound1_end ", read_bound1_end
+        
         for i in range(len(t1_exons)):
             exon_start = t1_bounds[i]
+#            print "exon_start = " + str(exon_start)
             try:
                 exon_end = t1_bounds[i+1] - 1
             except IndexError:
                 exon_end = 999999
-        
+#            print "exon_end = " + str(exon_end)
+            
             if (exon_start <= read_bound1_start < exon_end) or \
                (exon_start <= read_bound1_end < exon_end) or \
                (read_bound1_start <= exon_start and exon_end < read_bound1_end):
+#                   print "Marking a node! " + t1_exons[i]
                    exon_graph1.node[t1_exons[i]]['marked'] = True
                    marked1.add(t1_exons[i])
         
@@ -311,6 +321,8 @@ def main(exonfilename, tpdmfilename):
         t2_bounds, t2_exons = transcript_to_exon[tpdm_d['transcript2']]
         assert len(t2_bounds) == len(t2_exons)
 
+#        print "The bounds and exons of transcript1 are ", t1_bounds, t1_exons
+        
         read_bound2_start = tpdm_d['pos2']
         read_bound2_end = tpdm_d['pos2'] + READ_LENGTH
         
@@ -324,6 +336,7 @@ def main(exonfilename, tpdmfilename):
             if (exon_start <= read_bound2_start < exon_end) or \
                (exon_start <= read_bound2_end < exon_end) or \
                (read_bound2_start <= exon_start and exon_end < read_bound2_end):
+#                   print "Marking a node! " + t2_exons[i]
                    exon_graph2.node[t2_exons[i]]['marked'] = True
                    marked2.add(t2_exons[i])
 
