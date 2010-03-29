@@ -1,1 +1,2 @@
-Trans1	Trans2	Exon14	Exon24	1	1
+Trans1	Trans2	Gene1	Gene2	250	135
+Trans1	Trans2	Gene1	Gene2	240	135
