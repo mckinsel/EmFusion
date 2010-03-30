@@ -16,6 +16,7 @@ class Random_EM_Map: public EM_Map {
 private:
 	string seq1, seq2;
 public:
+	Random_EM_Map ();
 	Random_EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, MarkovChain& mc);
 	virtual ~Random_EM_Map();
 	long double em_prob(long double);

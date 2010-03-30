@@ -8,6 +8,10 @@
 #include "Random_EM_Map.h"
 #include <assert.h>
 
+Random_EM_Map::Random_EM_Map () {
+	d = 1;
+	isoform_length = 1;
+}
 Random_EM_Map::Random_EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, MarkovChain& mc) {
 
 	assert(bt1.base_read_id == bt2.base_read_id);

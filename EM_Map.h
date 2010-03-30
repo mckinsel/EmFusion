@@ -21,6 +21,7 @@ typedef tr1::unordered_map<string, int> string2intumap;
 
 class EM_Map {
 public:
+	EM_Map();
 	EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int2doubleumap&, string2intumap&);
 	virtual ~EM_Map();
 
@@ -37,9 +38,6 @@ public:
 	friend ostream &operator<<(ostream &stream, const EM_Map &emm);
 	friend istream &operator>>(istream &stream, EM_Map &emm);
 
-
-protected:
-	EM_Map();
 };
 
 #endif /* EM_MAP_H_ */

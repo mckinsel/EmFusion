@@ -8,6 +8,7 @@
 #include <fstream>
 #include <tr1/unordered_map>
 #include <string>
+#include <set>
 #include <vector>
 #include <iostream>
 #include <iomanip>
@@ -29,6 +30,13 @@ typedef tr1::unordered_map<string, long double > longdoubleumap;
 typedef tr1::unordered_map<int, double> int2doubleumap;
 typedef tr1::unordered_map<string, int> string2intumap;
 
+
+void clear_EM_Map_vector(vector<EM_Map*> & emm) {
+	for(unsigned int i = 0; i < emm.size(); i++) {
+		delete emm.at(i);
+	}
+	emm.clear();
+}
 double getMarkovChain(string filename, MarkovChain& mc) {
 
 //	First iterate through the unmapped file to build the MM
@@ -91,62 +99,142 @@ long double log_likelihood(vectorumap & read2emmap, longdoubleumap & th){
 	}
 	return log_score;
 }
-void EM_Update( vectorumap & read2emmap, vectorumap & isoform2emmap, longdoubleumap & th, longdoubleumap & newth, int N){
+void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, longdoubleumap & newth, int N){
 
 	longdoubleumap read_sums;
 
-	vectorumap::iterator read_iterator;
+	longdoubleumap::iterator read_iterator;
 	vectorumap::iterator isoform_iterator;
 
-	//Calculate the denominators for the update rule.
+	ifstream EMstream;
+	ifstream randomstream;
+
+	EMstream.open(EMfilename.c_str());
+	randomstream.open(randomfilename.c_str());
+
+	EM_Map * emmap;
+	emmap = new EM_Map();
+
 	int counter = 0;
-	for(read_iterator=read2emmap.begin(); read_iterator != read2emmap.end(); read_iterator++){
 
-//		Iterate through every read and find the sum of all of its mappings.
-
-		long double sumread = 0;
-
-		string read_id = read_iterator->first;
-		vector<EM_Map*> emmaps = read_iterator->second;
-		for(unsigned int i=0; i < emmaps.size(); i++){
-			sumread += emmaps.at(i)->em_prob(th[emmaps.at(i)->isoform]);
-		}
-		read_sums[read_id] = sumread;
-//		if(sumread == 0 || true){
-//			cout << "Read " << read_id << " sumread is " << sumread << endl;
-//		}
+	while(EMstream >> *emmap) {
 		counter++;
+		if(counter%100000 == 0) cout << "On BT entry " << counter << endl;
+		read_iterator = read_sums.find(emmap->base_read_id);
+		if (read_iterator == read_sums.end()) {
+			read_sums[emmap->base_read_id] = 0;
+		}
+		read_sums[emmap->base_read_id] += emmap->em_prob(th[emmap->isoform]);
 	}
+
+	Random_EM_Map * remmap;
+	remmap = new Random_EM_Map();
+
+	while (randomstream >> *remmap) {
+		read_sums[remmap->base_read_id] += remmap->em_prob(th[remmap->isoform]);
+	}
+
+	cout << "Done reading BT file the first time." << endl;
+	counter = 0;
+	EMstream.close();
+	randomstream.close();
+
+	//Calculate the denominators for the update rule.
+//	int counter = 0;
+//	for(read_iterator=read2emmap.begin(); read_iterator != read2emmap.end(); read_iterator++){
+//
+////		Iterate through every read and find the sum of all of its mappings.
+//
+//		long double sumread = 0;
+//
+//		string read_id = read_iterator->first;
+//		vector<EM_Map*> emmaps = read_iterator->second;
+//		for(unsigned int i=0; i < emmaps.size(); i++){
+//			sumread += emmaps.at(i)->em_prob(th[emmaps.at(i)->isoform]);
+//		}
+//		read_sums[read_id] = sumread;
+////		if(sumread == 0 || true){
+////			cout << "Read " << read_id << " sumread is " << sumread << endl;
+////		}
+//		counter++;
+//	}
 
 //	Now actually calculate a new theta.
-	counter = 0;
-	for(isoform_iterator=isoform2emmap.begin(); isoform_iterator != isoform2emmap.end(); isoform_iterator++){
+////	counter = 0;
+//	for(isoform_iterator=isoform2emmap.begin(); isoform_iterator != isoform2emmap.end(); isoform_iterator++){
+//
+////		Iterate through every isoform, including the random isoform.
+//		long double sumterm = 0;
+//		string isoform_id = isoform_iterator->first;
+//		vector<EM_Map*> isoemmaps = isoform_iterator->second;
+//		for(unsigned int i=0; i < isoemmaps.size(); i++){
+//			sumterm += isoemmaps.at(i)->em_prob(th[isoform_id])/read_sums[isoemmaps.at(i)->base_read_id];
+//		}
+////		cout << "Isoform " << isoform_id << " sumterm is " << sumterm << endl;
+//		newth[isoform_id] = sumterm/N;
+//		counter++;
+////		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
+//
+//	}
 
-//		Iterate through every isoform, including the random isoform.
-		long double sumterm = 0;
-		string isoform_id = isoform_iterator->first;
-		vector<EM_Map*> isoemmaps = isoform_iterator->second;
-		for(unsigned int i=0; i < isoemmaps.size(); i++){
-			sumterm += isoemmaps.at(i)->em_prob(th[isoform_id])/read_sums[isoemmaps.at(i)->base_read_id];
+	EMstream.open(EMfilename.c_str());
+	randomstream.open(randomfilename.c_str());
+
+	string current_isoform_id = "";
+	vector<EM_Map*> emmap_vect;
+
+
+	while (EMstream >> *emmap) {
+		if(emmap->isoform != current_isoform_id && current_isoform_id != "") {
+			long double sumterm = 0;
+			for(unsigned int i=0; i < emmap_vect.size(); i++) {
+				sumterm += emmap_vect.at(i)->em_prob(th[current_isoform_id])/read_sums[emmap_vect.at(i)->base_read_id];
+			}
+			newth[current_isoform_id] = sumterm/N;
+			clear_EM_Map_vector(emmap_vect);
+			current_isoform_id = emmap->isoform;
 		}
-//		cout << "Isoform " << isoform_id << " sumterm is " << sumterm << endl;
-		newth[isoform_id] = sumterm/N;
-		counter++;
-//		if(counter % 50000 == 0) cout << counter << " isoforms processed." << endl;
 
+		counter++;
+		if(counter % 100000 == 0) cout << "On BT entry " << counter << endl;
+		emmap_vect.push_back(emmap);
+		emmap = new EM_Map();
 	}
 
+	long double sumterm = 0;
+	for(unsigned int i=0; i < emmap_vect.size(); i++) {
+		sumterm += emmap_vect.at(i)->em_prob(th[current_isoform_id])/read_sums[emmap_vect.at(i)->base_read_id];
+	}
+	newth[current_isoform_id] = sumterm/N;
+	clear_EM_Map_vector(emmap_vect);
+
+	while (randomstream >> *remmap) {
+		current_isoform_id = remmap->isoform;
+		emmap_vect.push_back(remmap);
+		remmap = new Random_EM_Map();
+	}
+
+	sumterm = 0;
+	for(unsigned int i=0; i < emmap_vect.size(); i++) {
+		sumterm += emmap_vect.at(i)->em_prob(th[current_isoform_id])/read_sums[emmap_vect.at(i)->base_read_id];
+	}
+	newth[current_isoform_id] = sumterm/N;
+	clear_EM_Map_vector(emmap_vect);
 }
 
 
 
 int EM_main(int argc, char * argv[]){
 
-	char * btfilename = argv[1];
+	char * btfilename_mappingsorted = argv[1];
 	char * dist_prob_file = argv[2];
 	char * reference_fasta = argv[3];
 	char * unmapped_fasta = argv[4];
 	int offset = atoi(argv[5]);
+
+	char * EMfilename = NULL;
+	strcpy(EMfilename, btfilename_mappingsorted);
+	strcat(EMfilename, ".emint");
 
 	cout << "Processed arguments." << endl;
 //	Get Markov Chain for unmapped
@@ -188,15 +276,26 @@ int EM_main(int argc, char * argv[]){
 	isoform_lengths[current_isoform] = lengthcounter;
 
 //	Now iterate through bowtie file
-	ifstream btstream(btfilename);
+	ifstream btstream(btfilename_mappingsorted);
+	ofstream emintstream(EMfilename);
+
+	char * randomfilename = NULL;
+	strcpy(randomfilename, btfilename_mappingsorted);
+	strcat(randomfilename, ".random");
+	ofstream randomstream(randomfilename);
+
 	BowtieEntry bt1(offset);
 	BowtieEntry bt2(offset); //Initialize with offset
 
-	vectorumap read_to_emmaps;
-	vectorumap isoform_to_emmaps;
+//	vectorumap read_to_emmaps;
+//	vectorumap isoform_to_emmaps;
 
-	vectorumap::iterator isoform_iterator;
-	vectorumap::iterator read_iterator;
+	set<string> seen_readids;
+	set<string>::iterator read_iterator;
+
+	set<string> seen_isoforms;
+	set<string>::iterator isoform_iterator;
+
 
 	longdoubleumap theta;
 	longdoubleumap newtheta;
@@ -209,53 +308,55 @@ int EM_main(int argc, char * argv[]){
 		EM_Map * pemmap;
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
 
-
-//		cout << "Looking at mapping of " << bt1.base_read_id << " to " << bt1.mapping << endl;
-//		cout << "It has a mapping probability of " << pemmap->P << endl;
-		read_iterator = read_to_emmaps.find(pemmap->base_read_id);
-		if(read_iterator == read_to_emmaps.end()){ //If it's the first time seeing the read.
+//		read_iterator = read_to_emmaps.find(pemmap->base_read_id);
+		read_iterator = seen_readids.find(pemmap->base_read_id);
+//		if(read_iterator == read_to_emmaps.end()){ //If it's the first time seeing the read.
+		if(read_iterator == seen_readids.end()) {
 			Random_EM_Map * prem;
 			prem = new Random_EM_Map(bt1, bt2, mc);
-			read_to_emmaps[prem->base_read_id].push_back(prem);
-			isoform_to_emmaps[prem->isoform].push_back(prem);
+			randomstream << prem;
+			delete prem;
+			seen_readids.insert(pemmap->base_read_id);
+//			read_to_emmaps[prem->base_read_id].push_back(prem);
+//			isoform_to_emmaps[prem->isoform].push_back(prem);
 		}
-		read_to_emmaps[pemmap->base_read_id].push_back(pemmap);
-		isoform_to_emmaps[pemmap->isoform].push_back(pemmap);
-
-//		delete bt1.read;
-//		delete bt2.read;
+		seen_isoforms.insert(pemmap->isoform);
+//		read_to_emmaps[pemmap->base_read_id].push_back(pemmap);
+//		isoform_to_emmaps[pemmap->isoform].push_back(pemmap);
+		emintstream << pemmap;
+		delete pemmap;
 		counter++;
 		if(counter%1000000==0) cout << "Reading Bowtie pair " << counter << endl;
 	}
-
+	emintstream.close();
+	randomstream.close();
 
 	cout << "Bowtie reads read in." << endl;
 
-	int N = (int)read_to_emmaps.size();
-	int M = (int)isoform_to_emmaps.size();
+	int N = (int)seen_readids.size();
+	int M = (int)seen_isoforms.size();
 	cout << "N " << N << " M " << M << endl;
 
-	isoform_iterator = isoform_to_emmaps.begin();
-	while(isoform_iterator != isoform_to_emmaps.end()){
-		theta[isoform_iterator->first] = 1/(long double)M;
+	isoform_iterator = seen_isoforms.begin();
+	while(isoform_iterator != seen_isoforms.end()){
+		theta[*isoform_iterator] = 1/(long double)M;
 		++isoform_iterator;
 	}
-
 	cout << "Made first theta guess." << endl;
 	int count = 0;
-	long double log_diff = 1;
-	long double oldll, newll;
+//	long double log_diff = 1;
+//	long double oldll, newll;
 
-	while(log_diff > 1e-10){
-		oldll = log_likelihood(read_to_emmaps, theta);
-		EM_Update(read_to_emmaps, isoform_to_emmaps, theta, newtheta, N);
-		newll = log_likelihood(read_to_emmaps, newtheta);
+	while(count < 20){
+//		oldll = log_likelihood(read_to_emmaps, theta);
+		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
+//		newll = log_likelihood(read_to_emmaps, newtheta);
 		if(count % 10 == 0){
 			cout << "Starting iteration " << count << endl;
-			cout << " Old log likelihood is " << oldll << endl;
-			cout << " New log likelihood is " << newll << endl;
+//			cout << " Old log likelihood is " << oldll << endl;
+//			cout << " New log likelihood is " << newll << endl;
 		}
-		log_diff = abs(oldll - newll)/abs(oldll);
+//		log_diff = abs(oldll - newll)/abs(oldll);
 		theta = newtheta;
 		count++;
 	}
@@ -266,7 +367,7 @@ int EM_main(int argc, char * argv[]){
 		outstream << thiter->first << "\t" << thiter->second << endl;
 	}
 
-	cout << "Final mapped log likelihood : " << setprecision(15) << newll << endl;
+//	cout << "Final mapped log likelihood : " << setprecision(15) << newll << endl;
 	cout << "Unmapped log likelihood : " << setprecision(15) << log_unmapped_prob << endl;
 	cout << "Number of reads : " << N << endl;
 	cout << "Number of isoforms : " << M << endl;

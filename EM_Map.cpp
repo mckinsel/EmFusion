@@ -25,7 +25,7 @@ EM_Map::EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int2doubleumap& d_prob, strin
 
 }
 
-EM_Map::EM_Map() {
+EM_Map::EM_Map () {
 //	start = -1;
 //	end = -1;
 	d = 1;
