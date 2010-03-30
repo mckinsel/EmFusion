@@ -118,6 +118,8 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 	int counter = 0;
 
 	while(EMstream >> *emmap) {
+
+		cout << emmap->base_read_id << " " << emmap->isoform << endl;
 		counter++;
 		if(counter%100000 == 0) cout << "On BT entry " << counter << endl;
 		read_iterator = read_sums.find(emmap->base_read_id);
@@ -232,7 +234,7 @@ int EM_main(int argc, char * argv[]){
 	char * unmapped_fasta = argv[4];
 	int offset = atoi(argv[5]);
 
-	char * EMfilename = NULL;
+	char EMfilename[150];
 	strcpy(EMfilename, btfilename_mappingsorted);
 	strcat(EMfilename, ".emint");
 
@@ -279,7 +281,7 @@ int EM_main(int argc, char * argv[]){
 	ifstream btstream(btfilename_mappingsorted);
 	ofstream emintstream(EMfilename);
 
-	char * randomfilename = NULL;
+	char randomfilename[150];
 	strcpy(randomfilename, btfilename_mappingsorted);
 	strcat(randomfilename, ".random");
 	ofstream randomstream(randomfilename);
@@ -308,22 +310,16 @@ int EM_main(int argc, char * argv[]){
 		EM_Map * pemmap;
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
 
-//		read_iterator = read_to_emmaps.find(pemmap->base_read_id);
 		read_iterator = seen_readids.find(pemmap->base_read_id);
-//		if(read_iterator == read_to_emmaps.end()){ //If it's the first time seeing the read.
 		if(read_iterator == seen_readids.end()) {
 			Random_EM_Map * prem;
 			prem = new Random_EM_Map(bt1, bt2, mc);
-			randomstream << prem;
+			randomstream << *prem;
 			delete prem;
 			seen_readids.insert(pemmap->base_read_id);
-//			read_to_emmaps[prem->base_read_id].push_back(prem);
-//			isoform_to_emmaps[prem->isoform].push_back(prem);
 		}
 		seen_isoforms.insert(pemmap->isoform);
-//		read_to_emmaps[pemmap->base_read_id].push_back(pemmap);
-//		isoform_to_emmaps[pemmap->isoform].push_back(pemmap);
-		emintstream << pemmap;
+		emintstream << *pemmap;
 		delete pemmap;
 		counter++;
 		if(counter%1000000==0) cout << "Reading Bowtie pair " << counter << endl;

@@ -20,7 +20,7 @@ TEST(EMTest, Resolves3MultimapCase) {
 //	FG GGGGGGGGGGGGGAAAAAAAAAAAAAAAAA
 
 	char btfilename[50], dist_prob_file[50], reference_fasta[50], unmapped_fasta[50];
-	strcpy(btfilename, "../Test/EM_MapTest.txt");
+	strcpy(btfilename, "../Test/EM_MapTest.txt.sorted");
 	strcpy(dist_prob_file, "../Test/EMTest_distprob.txt");
 	strcpy(reference_fasta, "../Test/EMTest_reference.txt");
 	strcpy(unmapped_fasta, "../Test/EMTest_unmapped.txt");
@@ -72,7 +72,7 @@ TEST(EMTest, Resolves4MultimapCase) {
 //	G2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //	FG GGGGGGGGGGGGGAAAAAAAAAAAAAAAAA
 	char btfilename[50], dist_prob_file[50], reference_fasta[50], unmapped_fasta[50];
-	strcpy(btfilename, "../Test/EM_Test2.txt");
+	strcpy(btfilename, "../Test/EM_Test2.txt.sorted");
 	strcpy(dist_prob_file, "../Test/EMTest_distprob.txt");
 	strcpy(reference_fasta, "../Test/EMTest_reference.txt");
 	strcpy(unmapped_fasta, "../Test/EMTest_unmapped.txt");

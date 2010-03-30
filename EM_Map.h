@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <iomanip>
 #include <tr1/unordered_map>
 #include "BowtieEntry.h"
 

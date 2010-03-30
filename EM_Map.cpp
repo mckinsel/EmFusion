@@ -45,7 +45,7 @@ long double EM_Map::em_prob(long double theta_i) {
 }
 
 ostream& operator<<(ostream &stream, const EM_Map &emm) {
-	stream << emm.base_read_id << "\t" << emm.isoform << "\t" << emm.isoform_length << "\t" << emm.d << "\t" << emm.P << endl;
+	stream << emm.base_read_id << "\t" << emm.isoform << "\t" << emm.isoform_length << "\t" << setprecision(25) << emm.d << "\t" << emm.P << endl;
 	return stream;
 }
 
