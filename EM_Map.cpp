@@ -55,5 +55,6 @@ istream& operator>>(istream &stream, EM_Map &emm) {
 	stream >> emm.isoform_length;
 	stream >> emm.d;
 	stream >> emm.P;
+//	cout << "read in a EM_Map " << emm.base_read_id << " " << emm.isoform << " " << emm.d << " " << emm.P << " " << emm.isoform_length << " " << emm.em_prob(1) << endl;
 	return stream;
 }
