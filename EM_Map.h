@@ -28,8 +28,8 @@ public:
 
 	string base_read_id;
 	string isoform;
-	int start;
-	int end;
+//	int start;
+//	int end;
 	double d;
 	int isoform_length;
 	long double P;
