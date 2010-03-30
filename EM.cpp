@@ -168,7 +168,7 @@ int EM_main(int argc, char * argv[]){
 		dist_prob[atoi(nextint.c_str())] = atof(nextprob.c_str());
 	}
 
-	cout << "Got distance probabilites." << endl;
+	cout << "Got distance probabilities." << endl;
 
 //	Get gene lengths
 	string2intumap isoform_lengths;

@@ -43,3 +43,17 @@ long double EM_Map::em_prob(long double theta_i) {
 
 	return (1/(long double)isoform_length)*P*d*theta_i;
 }
+
+ostream& operator<<(ostream &stream, const EM_Map &emm) {
+	stream << emm.base_read_id << "\t" << emm.isoform << "\t" << emm.isoform_length << "\t" << emm.d << "\t" << emm.P << endl;
+	return stream;
+}
+
+istream& operator>>(istream &stream, EM_Map &emm) {
+	stream >> emm.base_read_id;
+	stream >> emm.isoform;
+	stream >> emm.isoform_length;
+	stream >> emm.d;
+	stream >> emm.P;
+	return stream;
+}
