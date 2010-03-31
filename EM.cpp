@@ -159,7 +159,7 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 		read_sums[remmap->base_read_id] += remmap->em_prob(th[remmap->isoform]);
 	}
 
-	cout << "Done reading BT file the first time." << endl;
+//	cout << "Done reading BT file the first time." << endl;
 	counter = 0;
 	EMstream.close();
 	randomstream.close();
@@ -334,18 +334,20 @@ int EM_main(int argc, char * argv[]){
 	cout << "Made first theta guess." << endl;
 	int count = 0;
 	long double log_diff = 1;
-	long double oldll, newll;
+	long double oldll = 0;
+	long double newll = 0;
 
 	while(log_diff > 1e-10){
-		oldll = log_likelihood(EMfilename, randomfilename, theta);
+		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
-		newll = log_likelihood(EMfilename, randomfilename, newtheta);
+		if(count % 10 == 0) newll = log_likelihood(EMfilename, randomfilename, newtheta);
 		if(count % 10 == 0){
 			cout << "Starting iteration " << count << endl;
 			cout << " Old log likelihood is " << oldll << endl;
 			cout << " New log likelihood is " << newll << endl;
 		}
-		log_diff = abs(oldll - newll)/abs(oldll);
+
+		if(count % 10 == 0) log_diff = abs(oldll - newll)/abs(oldll);
 		theta = newtheta;
 		count++;
 	}
