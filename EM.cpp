@@ -79,23 +79,42 @@ double getMarkovChain(string filename, MarkovChain& mc) {
 	return log_unmapped_prob;
 }
 
-long double log_likelihood(vectorumap & read2emmap, longdoubleumap & th){
+long double log_likelihood(string emfilename, string randomfilename, longdoubleumap & th){
 
 	long double log_score = 0;
-	vectorumap::iterator read_iterator;
+	longdoubleumap::iterator read_iterator;
+	longdoubleumap readid_to_score;
 
-	for(read_iterator=read2emmap.begin(); read_iterator != read2emmap.end(); read_iterator++){
-		vector<EM_Map*> read_emmaps = read_iterator->second;
+	EM_Map * emmap;
+	emmap = new EM_Map();
 
-		long double read_score = 0;
+	ifstream emstream(emfilename.c_str());
 
-		for(unsigned int i=0; i < read_emmaps.size(); i++){
-			read_score += read_emmaps.at(i)->em_prob(th[read_emmaps.at(i)->isoform]);
+	while (emstream >> *emmap && !emstream.eof()) {
+		read_iterator = readid_to_score.find(emmap->base_read_id);
+		if(read_iterator == readid_to_score.end()) {
+			readid_to_score[emmap->base_read_id] = 0;
 		}
-		if(read_score == 0){
-			cout << read_iterator->first << endl;
-		}
-		log_score += log(read_score);
+		readid_to_score[emmap->base_read_id] += emmap->em_prob(th[emmap->isoform]);
+	}
+
+	emstream.close();
+	delete emmap;
+
+	Random_EM_Map * remmap;
+	remmap = new Random_EM_Map();
+
+	ifstream randomstream(randomfilename.c_str());
+
+	while (randomstream >> *remmap && !randomstream.eof()) {
+		readid_to_score[remmap->base_read_id] += remmap->em_prob(th["random"]);
+	}
+
+	randomstream.close();
+	delete remmap;
+
+	for(read_iterator = readid_to_score.begin(); read_iterator != readid_to_score.end(); read_iterator++) {
+		log_score += log(read_iterator->second);
 	}
 	return log_score;
 }
@@ -191,6 +210,9 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 	}
 	newth[current_isoform_id] = sumterm/N;
 	clear_EM_Map_vector(emmap_vect);
+
+	delete emmap;
+	delete remmap;
 }
 
 
@@ -311,28 +333,19 @@ int EM_main(int argc, char * argv[]){
 
 	cout << "Made first theta guess." << endl;
 	int count = 0;
-//	long double log_diff = 1;
-//	long double oldll, newll;
+	long double log_diff = 1;
+	long double oldll, newll;
 
-	while(count < 20){
-//		oldll = log_likelihood(read_to_emmaps, theta);
-
-//		newll = log_likelihood(read_to_emmaps, newtheta);
+	while(log_diff > 1e-10){
+		oldll = log_likelihood(EMfilename, randomfilename, theta);
+		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
+		newll = log_likelihood(EMfilename, randomfilename, newtheta);
 		if(count % 10 == 0){
 			cout << "Starting iteration " << count << endl;
-//			cout << " Old log likelihood is " << oldll << endl;
-//			cout << " New log likelihood is " << newll << endl;
+			cout << " Old log likelihood is " << oldll << endl;
+			cout << " New log likelihood is " << newll << endl;
 		}
-		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
-
-//		for(longdoubleumap::iterator it = theta.begin(); it != theta.end(); it ++) {
-//			cout << "theta at " << it->first << " is " << it->second << endl;
-//		}
-//
-//		for(longdoubleumap::iterator it = newtheta.begin(); it != newtheta.end(); it ++) {
-//				cout << "newtheta at " << it->first << " is " << it->second << endl;
-//		}
-//		log_diff = abs(oldll - newll)/abs(oldll);
+		log_diff = abs(oldll - newll)/abs(oldll);
 		theta = newtheta;
 		count++;
 	}
