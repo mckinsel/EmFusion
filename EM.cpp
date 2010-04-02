@@ -138,7 +138,7 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 
 	while(EMstream >> *emmap && !EMstream.eof()) {
 		counter++;
-		if(counter%100000 == 0) cout << "On BT entry " << counter << endl;
+		if(counter%5000000 == 0) cout << "On BT entry " << counter << endl;
 		read_iterator = read_sums.find(emmap->base_read_id);
 		if (read_iterator == read_sums.end()) {
 			read_sums[emmap->base_read_id] = 0;
@@ -186,7 +186,7 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 
 		counter++;
 		current_isoform_id = emmap->isoform;
-		if(counter % 100000 == 0) cout << "On BT entry " << counter << endl;
+		if(counter % 5000000 == 0) cout << "On BT entry " << counter << endl;
 		emmap_vect.push_back(emmap);
 		emmap = new EM_Map();
 	}
@@ -337,14 +337,15 @@ int EM_main(int argc, char * argv[]){
 	long double oldll = 0;
 	long double newll = 0;
 
-	while(log_diff > 1e-10){
+	while(log_diff > 1e-5){
+		cout << "Starting iteration " << count << endl;
 		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
 		if(count % 10 == 0) newll = log_likelihood(EMfilename, randomfilename, newtheta);
 		if(count % 10 == 0){
-			cout << "Starting iteration " << count << endl;
 			cout << " Old log likelihood is " << oldll << endl;
 			cout << " New log likelihood is " << newll << endl;
+			cout << " Difference is " << abs(oldll - newll)/abs(oldll) << endl;
 		}
 
 		if(count % 10 == 0) log_diff = abs(oldll - newll)/abs(oldll);
