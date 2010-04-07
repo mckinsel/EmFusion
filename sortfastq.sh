@@ -18,4 +18,4 @@ END {
 		printf("\n")
 	}
 }
-' $1 | sort -T . -S 4G | sed -e 's/~~/\n/g' -e 's/\n\n/\n/g'  > $1.sorted;
+' $1 | sort -s -T . -S 4G | sed -e 's/~~/\n/g' -e 's/\n\n/\n/g'  > $1.sorted;

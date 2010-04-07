@@ -82,7 +82,8 @@ int Sift_main(int argc, char * argv[]) {
 	int iter_counter = 0;
 
 	while(fastqstream1 >> read1 && fastqstream2 >> read2) {
-
+		cout << read1.base_id << " " << read2.base_id << endl;		
+		assert(read1.base_id == read2.base_id);
 		++iter_counter;
 		if(iter_counter % 1000000 == 0) {
 			cout << "Working on read " << iter_counter << endl;
