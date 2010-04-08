@@ -177,7 +177,7 @@ int Sift_main(int argc, char * argv[]) {
 				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
 					for(unsigned int j = 0; j < bowtieentries2.size(); j++){
 
-						if(bowtieentries1.at(i)->strand == bowtieentries1.at(i)->strand) {
+						if(bowtieentries1.at(i)->strand == bowtieentries2.at(j)->strand) {
 //							Do nothing. The orientation is wrong.
 						} else if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
