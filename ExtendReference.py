@@ -6,21 +6,15 @@ MAX_MARK_LENGTH = 500
 READ_LENGTH = 40
 
 
-def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None, 
-        exon_list = [], seenmarked1 = set(), seenmarked2 = set(),
-        marked1 = False, marked2 = False, marked_distance = 0):
+def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, firstgene, 
+        secondgene, visited = None, exon_list = [], seenmarked1 = set(), 
+        seenmarked2 = set(), marked1 = False, marked2 = False, 
+        marked_distance = 0):
             
     if visited is None: visited = set()
     
-    
     fail = False
-    
-#    print "visiting node %s in graph %d" % (v, g.node[v]['graph'])
-#    print "sinkname %s" % sinkname
-#    print "marked1_set", marked1_set
-#    print "marked2_set", marked2_set
-#    print "exon_list", exon_list
-    
+        
 #===============================================================================
 #     Check if we've passed marked nodes and if so, how long between marked1 and
 #     marked2.
@@ -39,13 +33,8 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
         m_d = marked_distance + g.node[v]['length']
     else:
         m_d = int(marked_distance)
-
-#    print "marked1 %d ismarked1 %d" %(marked1, ismarked1)
-#    print "marked2 %d ismarked2 %d" %(marked2, ismarked2)
-#    print "m_d %d" % m_d
     
     if m_d > MAX_MARK_LENGTH:
-#        print "FAILING due to m_d %d > MAX_MARK_LENGTH %d" % (m_d, MAX_MARK_LENGTH)
         fail = True
     
 #===============================================================================
@@ -53,7 +42,6 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
 #     nodes in the first.
 #===============================================================================
     if g.node[v]['graph'] == 2 and seenmarked1 != marked1_set:
-#        print "FAILING due to getting to graph 2 before hitting marked1_set"
         fail = True
 
     
@@ -63,11 +51,8 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
 #===============================================================================
     
     if v == sinkname:
-#        print "reached sink!"
-#        print exon_list
-#        print seenmarked1
-#        print seenmarked2
         if seenmarked1 == marked1_set and seenmarked2 == marked2_set:
+            outfileh.write(firstgene + '.' + secondgene + '\t')
             outfileh.write('\t'.join(exon_list[1:]))
             outfileh.write('\n')
             
@@ -76,7 +61,6 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
     
     
     if not fail:
-#        visited.add(v)
         if g.node[v]['marked'] == True and g.node[v]['graph'] == 1:
             seenmarked1.add(v)
         if g.node[v]['marked'] == True and g.node[v]['graph'] == 2:
@@ -86,25 +70,12 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, visited = None,
         for neighbor in g.neighbors(v):
             if neighbor not in visited:
                 dfs(neighbor, g, sinkname, marked1_set, marked2_set, outfileh,
-                visited, e_l, set(seenmarked1), set(seenmarked2),
-                ismarked1, ismarked2, m_d)
+                firstgene, secondgene,  visited, e_l, set(seenmarked1), 
+                set(seenmarked2), ismarked1, ismarked2, m_d)
 
 
 def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
-    
-#    print len(eg1), len(eg2)
-#    print gene1, gene2
-#    print set(eg1.nodes()).intersection(eg2.nodes())
-#    for node in eg1.nodes():
-#        print node, eg1.node[node]
-#    for node in eg2.nodes():
-#        print node, eg2.node[node]
-#        
-#    for edge in eg1.edges_iter():
-#        print edge
-#    for edge in eg2.edges_iter():
-#        print edge
-    
+        
     g1 = nx.union(eg1, eg2)
     
     for node1 in eg1.nodes():
@@ -124,11 +95,7 @@ def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
                node2 not in (gene2 + "source", gene2 + "sink"):
                 g1.add_edge(node1, node2)
                 
-
-#    print 'eg1', eg1.node
-#    print 'eg2', eg2.node
-#    print 'g1', g1.node
-    dfs(gene1 + "source", g1, gene2 + "sink", marked1, marked2, outfileh)
+    dfs(gene1 + "source", g1, gene2 + "sink", marked1, marked2, outfileh, gene1, gene2)
     
     ##############################################################
                 
@@ -153,7 +120,7 @@ def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
                 g2.add_edge(node2, node1)
    
         
-    dfs(gene2 + "source", g2, gene1 + "sink", marked2, marked1, outfileh)    
+    dfs(gene2 + "source", g2, gene1 + "sink", marked2, marked1, outfileh, gene2, gene1)    
     
 def draw_graphs(exon_graph_d):
     
@@ -261,67 +228,65 @@ def main(exonfilename, tpdmfilename):
     marked2 = set()
     
     outef = open(tpdmfilename + '.exons', 'w')
+    mappingcount = 0
+    linecount = 0
     
     for line in file(tpdmfilename):
+        
+        linecount += 1
+        if linecount % 100000 == 0: 
+            print linecount
+        
         tpdm_d = parse_tpdm_line(line)
         
         if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair:
             
-            if current_transcript_pair[0]:
+            if current_transcript_pair[0] and mappingcount > 8:
                 write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
                                   current_transcript_pair[1], outef, marked1, marked2)
                 
             current_gene_pair = (tpdm_d['gene1'],tpdm_d['gene2'])
             current_transcript_pair = (tpdm_d['transcript1'],tpdm_d['transcript2'])
-
+            
             exon_graph1 = exon_graph_d[current_transcript_pair[0]]
             exon_graph2 = exon_graph_d[current_transcript_pair[1]]
-            
+
             clear_exon_graph(exon_graph1)
             clear_exon_graph(exon_graph2)
                     
             marked1 = set()
             marked2 = set()
+            
+            mappingcount = 0
 #===============================================================================
 #         Recall that t1_exons looks like [0, 123, 323, 542] where each number is
 #         the start site of the kth exon.
 #===============================================================================
-        
-#        print "We're working with " + tpdm_d['transcript1'] + " and " +\
-#            tpdm_d['transcript2']
-        
+              
         t1_bounds, t1_exons = transcript_to_exon[tpdm_d['transcript1']]
         assert len(t1_bounds) == len(t1_exons)
 
-#        print "The bounds and exons of transcript1 are ", t1_bounds, t1_exons
+        mappingcount += 1
         
         read_bound1_start = tpdm_d['pos1']
         read_bound1_end = tpdm_d['pos1'] + READ_LENGTH
-        
-#        print "read_bound1_start ", read_bound1_start
-#        print "read_bound1_end ", read_bound1_end
-        
+
         for i in range(len(t1_exons)):
             exon_start = t1_bounds[i]
-#            print "exon_start = " + str(exon_start)
             try:
                 exon_end = t1_bounds[i+1] - 1
             except IndexError:
                 exon_end = 999999
-#            print "exon_end = " + str(exon_end)
             
             if (exon_start <= read_bound1_start < exon_end) or \
                (exon_start <= read_bound1_end < exon_end) or \
                (read_bound1_start <= exon_start and exon_end < read_bound1_end):
-#                   print "Marking a node! " + t1_exons[i]
                    exon_graph1.node[t1_exons[i]]['marked'] = True
                    marked1.add(t1_exons[i])
         
         
         t2_bounds, t2_exons = transcript_to_exon[tpdm_d['transcript2']]
         assert len(t2_bounds) == len(t2_exons)
-
-#        print "The bounds and exons of transcript1 are ", t1_bounds, t1_exons
         
         read_bound2_start = tpdm_d['pos2']
         read_bound2_end = tpdm_d['pos2'] + READ_LENGTH
@@ -336,7 +301,6 @@ def main(exonfilename, tpdmfilename):
             if (exon_start <= read_bound2_start < exon_end) or \
                (exon_start <= read_bound2_end < exon_end) or \
                (read_bound2_start <= exon_start and exon_end < read_bound2_end):
-#                   print "Marking a node! " + t2_exons[i]
                    exon_graph2.node[t2_exons[i]]['marked'] = True
                    marked2.add(t2_exons[i])
 

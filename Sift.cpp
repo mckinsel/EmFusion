@@ -82,7 +82,7 @@ int Sift_main(int argc, char * argv[]) {
 	int iter_counter = 0;
 
 	while(fastqstream1 >> read1 && fastqstream2 >> read2) {
-		cout << read1.base_id << " " << read2.base_id << endl;		
+	//	cout << read1.base_id << " " << read2.base_id << endl;
 		assert(read1.base_id == read2.base_id);
 		++iter_counter;
 		if(iter_counter % 1000000 == 0) {
@@ -176,11 +176,10 @@ int Sift_main(int argc, char * argv[]) {
 //				Write out discordant mappings
 				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
 					for(unsigned int j = 0; j < bowtieentries2.size(); j++){
-						vector<string> transcripts (2);
-						vector<string> genes (2);
-						vector<int> positions (2);
 
-						if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
+						if(bowtieentries1.at(i)->strand == bowtieentries1.at(i)->strand) {
+//							Do nothing. The orientation is wrong.
+						} else if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_gene() << "\t";

@@ -48,7 +48,7 @@ def merge(chunks,key=None):
         else:
             heappush(values,(key(value),index,value,iterator,chunk))
 
-def batch_sort(input,output,key=None,buffer_size=15728640,tempdirs=['./'], re_pattern = '.*\n'):
+def batch_sort(input,output,key=None,buffer_size=1048576,tempdirs=['./'], re_pattern = '.*\n'):
     if not tempdirs:
         tempdirs.append(gettempdir())
     #tdir = os.tempnam(tempdirs[0])
