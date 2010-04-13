@@ -38,9 +38,9 @@ def main(exon_seq_file, fusion_exons_file):
     for line in file(fusion_exons_file):
         seq = ""
         ls = line.strip().split('\t')
-        for exon in ls:
+        for exon in ls[1:]:
             seq += esq.getseq(exon)
-        outf.write('>Fusion' + str(count) +'|Fusion' + str(count) +'|fusion|fusions|0|100|1\n')
+        outf.write('>F_' + ls[0] + '_' + str(count) + '|F_' + str(count) +'|fusion|fusions|0|100|1\n')
         outf.write(seq)
         outf.write('\n')
         count += 1

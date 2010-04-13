@@ -2,17 +2,15 @@ import networkx as nx
 #import matplotlib.pyplot as plt
 import sys
 
-MAX_MARK_LENGTH = 500
+MAX_MARK_LENGTH = 750
 READ_LENGTH = 40
 
 
 def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, firstgene, 
-        secondgene, visited = None, exon_list = [], seenmarked1 = set(), 
+        secondgene, exon_list = [], seenmarked1 = set(), 
         seenmarked2 = set(), marked1 = False, marked2 = False, 
         marked_distance = 0):
             
-    if visited is None: visited = set()
-    
     fail = False
         
 #===============================================================================
@@ -68,9 +66,8 @@ def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, firstgene,
         e_l = list(exon_list)
         e_l.append(v)
         for neighbor in g.neighbors(v):
-            if neighbor not in visited:
-                dfs(neighbor, g, sinkname, marked1_set, marked2_set, outfileh,
-                firstgene, secondgene,  visited, e_l, set(seenmarked1), 
+            dfs(neighbor, g, sinkname, marked1_set, marked2_set, outfileh,
+                firstgene, secondgene, e_l, set(seenmarked1), 
                 set(seenmarked2), ismarked1, ismarked2, m_d)
 
 
@@ -134,12 +131,14 @@ def parse_tpdm_line(tpdmline):
     out = {}
     ts = tpdmline.strip().split('\t')
     
-    out['gene1'] = ts[2]
-    out['gene2'] = ts[3]
-    out['transcript1'] = ts[0]
-    out['transcript2'] = ts[1]
-    out['pos1'] = int(ts[4])
-    out['pos2'] = int(ts[5])
+    out['read_id'] = ts[0]
+    
+    out['gene1'] = ts[3]
+    out['gene2'] = ts[4]
+    out['transcript1'] = ts[1]
+    out['transcript2'] = ts[2]
+    out['pos1'] = int(ts[5])
+    out['pos2'] = int(ts[6])
     
     return out
 
@@ -241,7 +240,7 @@ def main(exonfilename, tpdmfilename):
         
         if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair:
             
-            if current_transcript_pair[0] and mappingcount > 8:
+            if current_transcript_pair[0] and mappingcount > 4:
                 write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
                                   current_transcript_pair[1], outef, marked1, marked2)
                 

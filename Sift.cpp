@@ -1,5 +1,6 @@
 #include <fstream>
 #include <algorithm>
+#include <set>
 #include "main.h"
 #include "BowtieEntry.h"
 #include "FastaEntry.h"
@@ -174,12 +175,24 @@ int Sift_main(int argc, char * argv[]) {
 			} else { //Only discordant mappings
 //				cout << "Only discordant" << endl;
 //				Write out discordant mappings
+
+				set<string> genes;
+				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
+					genes.insert(bowtieentries1.at(i)->mapped_gene());
+				}
+				for(unsigned int j = 0; j < bowtieentries2.size(); j++){
+					genes.insert(bowtieentries2.at(j)->mapped_gene());
+				}
+
+				if(genes.size() > 10) continue;
+
 				for(unsigned int i = 0; i < bowtieentries1.size(); i++){
 					for(unsigned int j = 0; j < bowtieentries2.size(); j++){
 
 						if(bowtieentries1.at(i)->strand == bowtieentries2.at(j)->strand) {
 //							Do nothing. The orientation is wrong.
 						} else if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
+							discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_gene() << "\t";
@@ -187,6 +200,7 @@ int Sift_main(int argc, char * argv[]) {
 							discordant_mapping_stream << bowtieentries1.at(i)->position << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->position << endl;
 						} else if (bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) > 0) {
+							discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_gene() << "\t";

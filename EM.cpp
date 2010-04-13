@@ -337,7 +337,9 @@ int EM_main(int argc, char * argv[]){
 	long double oldll = 0;
 	long double newll = 0;
 
-	while(log_diff > 1e-5){
+	ofstream intoutstream;
+
+	while(log_diff > 1e-8){
 		cout << "Starting iteration " << count << endl;
 		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
@@ -347,7 +349,15 @@ int EM_main(int argc, char * argv[]){
 			cout << " New log likelihood is " << newll << endl;
 			cout << " Difference is " << abs(oldll - newll)/abs(oldll) << endl;
 		}
+		
 
+		if(count % 10 == 0) {
+			intoutstream.open("em_output.int" );
+			for(longdoubleumap::iterator thiter=newtheta.begin(); thiter != newtheta.end(); thiter++){
+         		       intoutstream << thiter->first << "\t" << thiter->second << endl;
+		        }
+			intoutstream.close();
+		}
 		if(count % 10 == 0) log_diff = abs(oldll - newll)/abs(oldll);
 		theta = newtheta;
 		count++;
