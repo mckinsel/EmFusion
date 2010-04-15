@@ -55,13 +55,13 @@ TEST(SiftTest, Works) {
 	char nl[201];
 	unmapped_stream.open("../Test/SiftTest_FQ1.txt.discord");
 	unmapped_stream.getline(nl, 200);
-	EXPECT_EQ(string(nl), "Trans4\tTrans5\tGene3\tGene4\t400\t300");
+	EXPECT_EQ(string(nl), "Read4\tTrans4\tTrans5\tGene3\tGene4\t400\t300");
 	unmapped_stream.getline(nl, 200);
-	EXPECT_EQ(string(nl), "Trans4\tTrans7\tGene3\tGene6\t400\t300");
+	EXPECT_EQ(string(nl), "Read4\tTrans4\tTrans7\tGene3\tGene6\t400\t300");
 	unmapped_stream.getline(nl, 200);
-	EXPECT_EQ(string(nl), "Trans5\tTrans6\tGene4\tGene5\t300\t400");
+	EXPECT_EQ(string(nl), "Read4\tTrans5\tTrans6\tGene4\tGene5\t300\t400");
 	unmapped_stream.getline(nl, 200);
-	EXPECT_EQ(string(nl), "Trans6\tTrans7\tGene5\tGene6\t400\t300");
+	EXPECT_EQ(string(nl), "Read4\tTrans6\tTrans7\tGene5\tGene6\t400\t300");
 
 
 	unmapped_stream.close();

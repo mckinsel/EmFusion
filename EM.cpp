@@ -349,7 +349,7 @@ int EM_main(int argc, char * argv[]){
 			cout << " New log likelihood is " << newll << endl;
 			cout << " Difference is " << abs(oldll - newll)/abs(oldll) << endl;
 		}
-		
+
 
 		if(count % 10 == 0) {
 			intoutstream.open("em_output.int" );
