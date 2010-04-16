@@ -23,9 +23,6 @@
 using namespace std;
 using namespace tr1;
 
-string FUSION_TAG = "F_";
-double FUSION_DISCOUNT = .5;
-
 typedef tr1::unordered_map<string, vector<EM_Map*> > vectorumap;
 typedef tr1::unordered_map<string, long double > longdoubleumap;
 typedef tr1::unordered_map<int, double> int2doubleumap;
@@ -247,7 +244,7 @@ int EM_main(int argc, char * argv[]){
 
 	while(dpstream >> nextint){
 		dpstream >> nextprob;
-		assert(atof(nextprob.c_str())) <= 1;
+		assert(atof(nextprob.c_str()) <= 1);
 		dist_prob[atoi(nextint.c_str())] = atof(nextprob.c_str());
 	}
 

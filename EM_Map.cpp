@@ -8,6 +8,8 @@
 #include "EM_Map.h"
 #include <assert.h>
 
+
+
 EM_Map::EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int2doubleumap& d_prob, string2intumap& i_length) {
 
 	assert(bt1.base_read_id == bt2.base_read_id);
@@ -41,7 +43,12 @@ long double EM_Map::em_prob(long double theta_i) {
 //	cout << "P " << P << endl;
 //	cout << "d " << d << endl;
 
-	return (1/(long double)isoform_length)*P*d*theta_i;
+	if(isoform.substr(0, 2) == "F_"){
+		r = 1;
+	} else {
+		r = 1;
+	}
+	return (1/(long double)isoform_length)*P*d*theta_i*r;
 }
 
 ostream& operator<<(ostream &stream, const EM_Map &emm) {

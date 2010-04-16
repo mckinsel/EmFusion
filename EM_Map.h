@@ -35,6 +35,7 @@ public:
 	double d;
 	int isoform_length;
 	long double P;
+	double r;
 
 	friend ostream &operator<<(ostream &stream, const EM_Map &emm);
 	friend istream &operator>>(istream &stream, EM_Map &emm);
