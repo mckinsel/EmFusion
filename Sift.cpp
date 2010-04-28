@@ -190,7 +190,14 @@ int Sift_main(int argc, char * argv[]) {
 
 						if(bowtieentries1.at(i)->strand == bowtieentries2.at(j)->strand) {
 //							Do nothing. The orientation is wrong.
-						} else if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
+						} else if(bowtieentries1.at(i)->strand == "+" &&
+								  bowtieentries1.at(i)->position <= bowtieentries2.at(j)->position){
+//							Also do nothing, they're in "opposite" orientations
+						} else if(bowtieentries1.at(i)->strand == "-" &&
+								  bowtieentries1.at(i)->position >= bowtieentries2.at(j)->position){
+//							Also do nothing, they're in "opposite" orientations
+						}
+						else if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
 							discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";

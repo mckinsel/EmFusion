@@ -245,6 +245,7 @@ int EM_main(int argc, char * argv[]){
 	while(dpstream >> nextint){
 		dpstream >> nextprob;
 		assert(atof(nextprob.c_str()) <= 1);
+		cout << nextint << "\t" << nextprob << endl;
 		dist_prob[atoi(nextint.c_str())] = atof(nextprob.c_str());
 	}
 
@@ -338,7 +339,7 @@ int EM_main(int argc, char * argv[]){
 
 	ofstream intoutstream;
 
-	while(log_diff > 1e-8){
+	while(log_diff > -1){
 		cout << "Starting iteration " << count << endl;
 		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
