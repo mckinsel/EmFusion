@@ -1,4 +1,3 @@
-
 import sys
 
 class exon_seq_cont(object):
