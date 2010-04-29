@@ -190,7 +190,7 @@ int Sift_main(int argc, char * argv[]) {
 
 						if(bowtieentries1.at(i)->strand == bowtieentries2.at(j)->strand) {
 //							Do nothing. The orientation is wrong.
-						} else if(bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) < 0) {
+						} else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
 							discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
@@ -198,7 +198,7 @@ int Sift_main(int argc, char * argv[]) {
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_gene() << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->position << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->position << endl;
-						} else if (bowtieentries1.at(i)->mapped_transcript().compare(bowtieentries2.at(j)->mapped_transcript()) > 0) {
+						} else if (bowtieentries1.at(i)->strand == "-" && bowtieentries2.at(j)->strand == "+") {
 							discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
 							discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
 							discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
