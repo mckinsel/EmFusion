@@ -230,7 +230,7 @@ int EM_main(int argc, char * argv[]){
 	cout << "Processed arguments." << endl;
 //	Get Markov Chain for unmapped
 
-	MarkovChain mc(3, 5);
+	MarkovChain mc(12, 5);
 	double log_unmapped_prob;
 	log_unmapped_prob = getMarkovChain(unmapped_fasta, mc);
 
@@ -245,7 +245,7 @@ int EM_main(int argc, char * argv[]){
 	while(dpstream >> nextint){
 		dpstream >> nextprob;
 		assert(atof(nextprob.c_str()) <= 1);
-		cout << nextint << "\t" << nextprob << endl;
+		//cout << nextint << "\t" << nextprob << endl;
 		dist_prob[atoi(nextint.c_str())] = atof(nextprob.c_str());
 	}
 
@@ -339,7 +339,7 @@ int EM_main(int argc, char * argv[]){
 
 	ofstream intoutstream;
 
-	while(log_diff > -1){
+	while(log_diff > 1e-10){
 		cout << "Starting iteration " << count << endl;
 		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
