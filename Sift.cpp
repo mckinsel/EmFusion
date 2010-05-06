@@ -196,7 +196,10 @@ int Sift_main(int argc, char * argv[]) {
 //              Do nothing. The orientation is wrong.
             } else if(found1 != string::npos || found2 != string::npos) {
 //              Also do nothing; it's a poly-A
-            } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
+            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 3 ||
+		      bowtieentries2.at(j)->mismatch_indices.size() > 3) {
+		
+	    } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
