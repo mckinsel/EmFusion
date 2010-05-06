@@ -339,7 +339,7 @@ int EM_main(int argc, char * argv[]){
 
 	ofstream intoutstream;
 
-	while(log_diff > 1e-10){
+	while(log_diff > -1){
 		cout << "Starting iteration " << count << endl;
 		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
