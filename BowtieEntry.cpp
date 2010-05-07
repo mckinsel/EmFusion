@@ -70,6 +70,7 @@ istream& operator>>(istream &stream, BowtieEntry& bt) {
 vector<int> BowtieEntry::get_indices(string mismatchstring) {
 	vector<string> parts;
 	vector<int> output;
+	vector<int> corrected_output;
 	size_t coloni;
 
 	myTokenize(mismatchstring, parts, ",");
@@ -79,7 +80,16 @@ vector<int> BowtieEntry::get_indices(string mismatchstring) {
 		parts[i].erase(coloni, parts[i].length()-coloni);
 		output.push_back((int)atoi(parts.at(i).c_str()));
 	}
-
+	
+	if(strand == "+"){
+		corrected_output = output;
+	} else if(strand == "-"){
+		int read_length = read->sequence.length();
+		for(unsigned int i=0; i<output.size(); i++){
+			corrected_output.push_back((-1*(output.at(i) - read->sequence.length() + 1)));
+		}
+	}
+	
 	return output;
 }
 
