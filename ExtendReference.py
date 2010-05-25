@@ -2,7 +2,7 @@ import networkx as nx
 #import matplotlib.pyplot as plt
 import sys
 
-MAX_MARK_LENGTH = 750
+MAX_MARK_LENGTH = 800
 READ_LENGTH = 40
 MIN_MAPPING_COUNT = 4
 MIN_GOOD_OVERLAP = 5
