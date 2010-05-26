@@ -1,96 +1,146 @@
+from copy import deepcopy
 import networkx as nx
 #import matplotlib.pyplot as plt
 import sys
 
-MAX_MARK_LENGTH = 800
-READ_LENGTH = 40
-MIN_MAPPING_COUNT = 4
+MAX_INSERT_SIZE = 800
+MIN_MAPPING_COUNT = 2
 MIN_GOOD_OVERLAP = 5
 
+def good_read_length(length, mismatches):
+    
+    out_len = int(length)
+    good_count = 0
+    while out_len > 0:
+        if (out_len - 1) not in mismatches:
+            good_count += 1
+        out_len -= 1
+        if good_count >= MIN_GOOD_OVERLAP:
+            break
+    return out_len
+        
 
-def dfs(v, g, sinkname, marked1_set, marked2_set, outfileh, firstgene, 
-        secondgene, length_1 = 0, exon_list = [], 
-        seenmarked1 = set(), seenmarked2 = set(), marked1 = False, 
-        marked2 = False, marked_distance = 0):
+def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2, 
+        exon_bounds_1, exon_bounds_2, outfileh, read_status = [], 
+        exon_list = [], length_in_1 = 0):
             
     fail = False
+    #mapped_reads are lists of tuples:
+    #(read_id, start_position, end_position)
+    
+    #read_status is a list of lists:
+    #[read_id, current_implied_insert_size, closed?]
+    
+    #exon_bounds are dictionaries
+    #eb[exon_id] = (exon_start, exon_end)
+    
+    #v is the name of the exon we're at
 #    print '*'*80
-#    print "Visiting node", v
-#===============================================================================
-#     Check if we've passed marked nodes and if so, how long between marked1 and
-#     marked2.
-#===============================================================================
-    if (not marked1) and g.node[v]['marked'] == True and g.node[v]['graph'] == 1:
-        ismarked1 = True
-    else:
-        ismarked1 = marked1
+#    print "Arrived at node " + v
+#    print "Read_status "
+#    pprint(read_status)
+#    print "Exon list " 
+#    pprint(exon_list)
     
-    if (not marked2) and g.node[v]['marked'] == True and g.node[v]['graph'] == 2:
-        ismarked2 = True
-    else:
-        ismarked2 = marked2
+    assert sorted([k[0] for k in mapped_reads_1]) == \
+           sorted([k[0] for k in mapped_reads_2])
+    
+    #First we're going to check for some fail conditions:
+    
+    seen_reads = sorted([k[0] for k in read_status]) #List of reads we've seen 
+                                                     #so far
+    all_reads = sorted([k[0] for k in mapped_reads_1]) #List of all reads
+    
+    open_reads = sorted([k[0] for k in read_status if k[2] == 0])
+    
+    current_gene = g.node[v]['graph'] #The gene of the exon we're at
+    
+    working_read_status = deepcopy(read_status)
+    
+    if 'source' in v or 'sink' in v:
+        exon_start, exon_end = (-1, -1)
+    elif current_gene == 1:
+        exon_start, exon_end = exon_bounds_1[v]
+    elif current_gene == 2:
+        exon_start, exon_end = exon_bounds_2[v]
+    
+#    print "seen reads"
+#    pprint(seen_reads)
+#    print "open reads"
+#    pprint(open_reads)
+#    print "current gene", current_gene
+    
+    #If we've gone to the second graph without hitting all the reads mapping to
+    #the first, stop
+    if current_gene == 2 and seen_reads != all_reads:
+#        print "FAILING BECAUSE DIDN'T SEE ALL READS IN GENE1"
+        fail = True
         
-    if marked1 and not ismarked2:
-        m_d = marked_distance + g.node[v]['length']
-    else:
-        m_d = int(marked_distance)
-    
-    if m_d > MAX_MARK_LENGTH:
-#        print "Failing because we've gone too far after a marked node."
+    #Now see if the implied insert size for any of the reads has become too
+    #large:
+    if working_read_status and max(k[1] for k in working_read_status) > \
+                                                            MAX_INSERT_SIZE:
+#        print "FAILING BECAUSE INSERT SIZE", max(k[1] for k in working_read_status)
         fail = True
     
-#    print "graph", g.node[v]['graph']
-#    print "marked?", g.node[v]['marked']
-#    print "ismarked1?", ismarked1, "ismarked2?", ismarked2
-#    print "m_d", m_d
-#    print "exon_list", exon_list
-#    print "seenmarked1", seenmarked1
-#    print "seenmarked2", seenmarked2
-#===============================================================================
-#     See if we've entered into the second graph without hitting all the marked
-#     nodes in the first.
-#===============================================================================
-    if g.node[v]['graph'] == 2 and seenmarked1 != marked1_set:
-#        print "Failing because in graph 2 but haven't seen all marked."
-        fail = True
-
     
-#===============================================================================
-#     See if we're at the sink of the graph and check if we've found something
-#     good.
-#===============================================================================
+    #So we didn't fail! Now, if we're in gene 1, see if we should open up any
+    #reads and then add the length of the exon to the implied insert size of the
+    #already open reads.
+    if not fail and current_gene == 1:
+        for read_tuple in mapped_reads_1:
+            if read_tuple[2] < exon_end and read_tuple[0] not in seen_reads:
+                working_read_status.append(
+                            [read_tuple[0], exon_end - read_tuple[2], 0]
+                            )
+#                print "opening read " + read_tuple[0]
+            elif read_tuple[0] in seen_reads:
+                status_index = [k[0] for k in working_read_status].index(read_tuple[0])
+                working_read_status[status_index][1] += (exon_end - exon_start)
+    #If we're in gene 2, close the open reads that we hit and add the length of
+    #the exon to those we don't
+    elif not fail and current_gene == 2:
+        for read_tuple in mapped_reads_2:
+            if exon_start <= read_tuple[1] < exon_end:
+                status_index = [k[0] for k in working_read_status].index(read_tuple[0])
+                working_read_status[status_index][1] += read_tuple[1] - exon_start
+                working_read_status[status_index][2] = 1
+#                print "closing read " + read_tuple[0]
+            elif read_tuple[0] in open_reads:
+                status_index = [k[0] for k in working_read_status].index(read_tuple[0])
+                working_read_status[status_index][1] += (exon_end - exon_start)
     
-    if v == sinkname:
-        if seenmarked1 == marked1_set and seenmarked2 == marked2_set:
-#            print "WRITING"
-            outfileh.write(firstgene + '.' + secondgene + '\t' + str(length_1) + '\t')
+    #Now, we see if we've come to the end of the line in gene 2
+    if not fail and v == secondgenename + 'sink':
+#        print "at sink"
+#        print open_reads
+        #Make sure no reads are left open
+        if len(open_reads) == 0:
+            outfileh.write(firstgenename + '.' + secondgenename + '\t' + \
+                            str(length_in_1) + '\t')
             outfileh.write('\t'.join(exon_list[1:]))
             outfileh.write('\n')
             
-        fail = True
     
     
-    
+    #Otherwise, just keep moving
     if not fail:
+        if current_gene == 1:
+            new_length_in_1 = length_in_1 + (exon_end - exon_start)
+        elif current_gene == 2:
+            new_length_in_1 = int(length_in_1)
         
-        if g.node[v]['graph'] == 1:
-            l_1 = int(length_1) + g.node[v]['length']
-        elif g.node[v]['graph'] == 2:
-            l_1 = int(length_1)
-        
-        if g.node[v]['marked'] == True and g.node[v]['graph'] == 1:
-            seenmarked1.add(v)
-        if g.node[v]['marked'] == True and g.node[v]['graph'] == 2:
-            seenmarked2.add(v)
-        e_l = list(exon_list)
-        e_l.append(v)
+        new_exon_list = deepcopy(exon_list)
+        new_exon_list.append(v)
         for neighbor in g.neighbors(v):
-            dfs(neighbor, g, sinkname, marked1_set, marked2_set, outfileh,
-                firstgene, secondgene, l_1, e_l, set(seenmarked1), 
-                set(seenmarked2), ismarked1, ismarked2, m_d)
+            dfs(neighbor, g, firstgenename, secondgenename, mapped_reads_1, 
+            mapped_reads_2,exon_bounds_1, exon_bounds_2, outfileh, 
+            working_read_status, new_exon_list, new_length_in_1)
 
 
-def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
+
+def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, mapped_reads_1, 
+                      mapped_reads_2, exon_dict):
         
     g1 = nx.union(eg1, eg2)
     
@@ -110,37 +160,24 @@ def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, marked1, marked2):
             if node1 not in (gene1 + "source", gene1 + "sink") and \
                node2 not in (gene2 + "source", gene2 + "sink"):
                 g1.add_edge(node1, node2)
-    
-#    print gene1 + "source", gene2 + "sink"
-#    print "marked1", marked1
-#    print "marked2", marked2
-    
-    dfs(gene1 + "source", g1, gene2 + "sink", marked1, marked2, outfileh, gene1, gene2)
-    
-    ##############################################################
                 
-#    g2 = nx.union(eg1, eg2)
+    exon_bounds_1 = exon_dict[gene1]
+    exon_bounds_2 = exon_dict[gene2]
+    
+#    print "calling dfs"
+#    print "mappedreads1"
+#    pprint(mapped_reads_1)
+#    print "mappedreads2"
+#    pprint(mapped_reads_2)
 #    
-#    for node1 in eg1.nodes():
-#        g2.node[node1] = eg1.node[node1]
-#    for node2 in eg2.nodes():
-#        g2.node[node2] = eg2.node[node2]
-#        
-#    for node1 in eg1.nodes():
-#        g2.node[node1]['graph'] = 2
-#        
-#    for node2 in eg2.nodes():
-#        g2.node[node2]['graph'] = 1    
-#    
-#    
-#    for node1 in eg1.nodes():
-#        for node2 in eg2.nodes():
-#            if node1 not in (gene1 + "source", gene1 + "sink") and \
-#               node2 not in (gene2 + "source", gene2 + "sink"):
-#                g2.add_edge(node2, node1)
-#   
-#        
-#    dfs(gene2 + "source", g2, gene1 + "sink", marked2, marked1, outfileh, gene2, gene1)    
+#    print "exon_bounds_1"
+#    pprint(exon_bounds_1.items())
+#    print "exon_bounds_2"
+#    pprint(exon_bounds_2.items())
+    
+    dfs(gene1 + "source", g1, gene1, gene2, mapped_reads_1, mapped_reads_2,
+        exon_bounds_1, exon_bounds_2, outfileh)
+
     
 def draw_graphs(exon_graph_d):
     
@@ -162,15 +199,13 @@ def parse_tpdm_line(tpdmline):
     out['transcript2'] = ts[2]
     out['pos1'] = int(ts[5])
     out['pos2'] = int(ts[6])
-    out['mismatches1'] = [int(k) for k in ts[7].split(',')[:-1]] ##There's an extra ',' at the end
-    out['mismatches2'] = [int(k) for k in ts[8].split(',')[:-1]]
+    out['length1'] = int(ts[7])
+    out['length2'] = int(ts[8])
+    out['mismatches1'] = [int(k) for k in ts[9].split(',')[:-1]]
+                                            ##There's an extra ',' at the end
+    out['mismatches2'] = [int(k) for k in ts[10].split(',')[:-1]]
     
     return out
-
-def clear_exon_graph(eg):
-    
-    for node in eg.nodes():
-        eg.node[node]['marked'] = False
     
 def parse_line(efline):
     
@@ -182,16 +217,16 @@ def parse_line(efline):
     out['exonid'] = lseq[4]
     out['start'] = int(lseq[5])
     out['end'] = int(lseq[6])
-    out['length'] = abs(out['start'] - out['end']) + 1
+    out['length'] = abs(out['start'] - out['end']) ##Add + 1 for Ensembl data!
 
     return out
 
 def main(exonfilename, tpdmfilename):
     
     
-#===============================================================================
+#==============================================================================
 #     First, build the exon_graph.
-#===============================================================================
+#==============================================================================
     exon_graph_d = {}
     exon_graph = nx.DiGraph()
     
@@ -202,14 +237,11 @@ def main(exonfilename, tpdmfilename):
     current_node = ""
     
     position_in_transcript = 0
-    transcript_to_exon = {}
+    exon_boundaries = {}
     
     for line in file(exonfilename):
         exon_d = parse_line(line)
-        
-        if exon_d['geneid'] != current_geneid:  ##If new gene
-            current_geneid = exon_d['geneid']
-                            
+                                    
         if exon_d['transcriptid'] != current_transcriptid:
             
             if current_transcriptid:
@@ -217,21 +249,22 @@ def main(exonfilename, tpdmfilename):
                 exon_graph_d[current_transcriptid] = exon_graph
                 
             exon_graph = nx.DiGraph() ##Make a new exon_graph
-            exon_graph.add_node(exon_d['transcriptid'] + "source", marked = False, length = 0) ##Add its source and sink
-            exon_graph.add_node(exon_d['transcriptid'] + "sink", marked = False, length = 0)
+            exon_graph.add_node(exon_d['transcriptid'] + "source", length = 0) ##Add its source and sink
+            exon_graph.add_node(exon_d['transcriptid'] + "sink", length = 0)
             
             current_node = exon_d['transcriptid'] + "source"
             current_transcriptid = exon_d['transcriptid']
             position_in_transcript = 0
-            transcript_to_exon[current_transcriptid] = [ [], [] ]
+            
+            exon_boundaries[current_transcriptid] = {}
         
-        exon_graph.add_node(exon_d['exonid'], marked = False, length = exon_d['length'])
+        exon_graph.add_node(exon_d['exonid'], length = exon_d['length'])
 
         exon_graph.add_edge(current_node, exon_d['exonid'])
         current_node = exon_d['exonid']
         
-        transcript_to_exon[current_transcriptid][0].append(position_in_transcript)
-        transcript_to_exon[current_transcriptid][1].append(exon_d['exonid'])
+        exon_boundaries[current_transcriptid][exon_d['exonid']] = \
+            (position_in_transcript, position_in_transcript + exon_d['length'])
         position_in_transcript += exon_d['length']
         
         
@@ -249,8 +282,8 @@ def main(exonfilename, tpdmfilename):
     exon_graph1 = None
     exon_graph2 = None
     
-    marked1 = set()
-    marked2 = set()
+    mapped_reads_1 = []
+    mapped_reads_2 = []
     
     outef = open(tpdmfilename + '.exons', 'w')
     read_set = set()
@@ -267,91 +300,45 @@ def main(exonfilename, tpdmfilename):
         if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair:
             
             if current_transcript_pair[0] and len(read_set) > MIN_MAPPING_COUNT:
-                write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
-                                  current_transcript_pair[1], outef, marked1, marked2)
+                write_exon_orders(exon_graph1, exon_graph2, 
+                    current_transcript_pair[0],current_transcript_pair[1], 
+                    outef, mapped_reads_1, mapped_reads_2, exon_boundaries)
                 
-            current_gene_pair = (tpdm_d['gene1'],tpdm_d['gene2'])
             current_transcript_pair = (tpdm_d['transcript1'],tpdm_d['transcript2'])
+            
+            mapped_reads_1 = []
+            mapped_reads_2 = []
             
             exon_graph1 = exon_graph_d[current_transcript_pair[0]]
             exon_graph2 = exon_graph_d[current_transcript_pair[1]]
-
-            clear_exon_graph(exon_graph1)
-            clear_exon_graph(exon_graph2)
                     
-            marked1 = set()
-            marked2 = set()
-            
             read_set = set()
 #===============================================================================
-#         Recall that t1_exons looks like [0, 123, 323, 542] where each number is
+#         Recall that t1_bounds looks like [0, 123, 323, 542] where each number is
 #         the start site of the kth exon.
 #===============================================================================
               
-        t1_bounds, t1_exons = transcript_to_exon[tpdm_d['transcript1']]
-        assert len(t1_bounds) == len(t1_exons)
-
         read_set.add(tpdm_d['read_id'])
         
-        read_bound1_start = tpdm_d['pos1']
-        read_bound1_end = tpdm_d['pos1'] + READ_LENGTH - 1
+        
+        read1_start = tpdm_d['pos1']
+        read1_end = tpdm_d['pos1'] + good_read_length(tpdm_d['length1'], 
+                                                      tpdm_d['mismatches1'])
+        mapped_reads_1.append( (tpdm_d['read_id'], read1_start, read1_end) )
+        
+        read2_start = tpdm_d['pos2']
+        read2_end = tpdm_d['pos2'] + good_read_length(tpdm_d['length2'], 
+                                                      tpdm_d['mismatches2'])
+        mapped_reads_2.append( (tpdm_d['read_id'], read2_start, read2_end) )
+        
 
-        for i in range(len(t1_exons)):
-            exon_start = t1_bounds[i]
-            try:
-                exon_end = t1_bounds[i+1] - 1
-            except IndexError:
-                exon_end = 999999
-            
-            if (exon_start <= read_bound1_start < exon_end) or \
-               (exon_start <= read_bound1_end < exon_end) or \
-               (read_bound1_start <= exon_start and exon_end < read_bound1_end):
-                   
-#                exon_positions = range(max(exon_start,read_bound1_start) , min(exon_end,read_bound1_end) + 1)
-#                read_positions = range(read_bound1_start, read_bound1_end + 1)
-#                overlap = list(set(read_positions).intersection(exon_positions))
-                overlap = range(max(exon_start,read_bound1_start) , min(exon_end,read_bound1_end) + 1)
-                if overlap:
-                    overlap_read_indices = [x - read_bound1_start for x in overlap]
-                    good_overlap = [x for x in overlap_read_indices \
-                                    if x not in tpdm_d['mismatches1']]
-                                    
-                    if len(good_overlap) >= MIN_GOOD_OVERLAP:
-                        exon_graph1.node[t1_exons[i]]['marked'] = True
-                        marked1.add(t1_exons[i])
         
         
-        t2_bounds, t2_exons = transcript_to_exon[tpdm_d['transcript2']]
-        assert len(t2_bounds) == len(t2_exons)
 
-        read_bound2_start = tpdm_d['pos2']
-        read_bound2_end = tpdm_d['pos2'] + READ_LENGTH - 1
-        
-        for i in range(len(t2_exons)):
-            exon_start = t2_bounds[i]
-            try:
-                exon_end = t2_bounds[i+1] - 1
-            except IndexError:
-                exon_end = 999999
-            
-            if (exon_start <= read_bound2_start < exon_end) or \
-               (exon_start <= read_bound2_end < exon_end) or \
-               (read_bound2_start <= exon_start and exon_end < read_bound2_end):
-                   
-#                exon_positions = range(max(exon_start,read_bound2_start) , min(exon_end,read_bound2_end) + 1)
-#                read_positions = range(read_bound2_start, read_bound2_end + 1)
-                overlap = range(max(exon_start,read_bound2_start) , min(exon_end,read_bound2_end) + 1)
-                
-                if overlap:
-                    overlap_read_indices = [x - read_bound2_start for x in overlap]
-                    good_overlap = [x for x in overlap_read_indices \
-                                    if x not in tpdm_d['mismatches2']]
-                    if len(good_overlap) >= MIN_GOOD_OVERLAP:
-                        exon_graph2.node[t2_exons[i]]['marked'] = True
-                        marked2.add(t2_exons[i])
-
-    write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
-                                current_transcript_pair[1], outef, marked1, marked2)    
+    if len(read_set) > MIN_MAPPING_COUNT:
+        write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
+                current_transcript_pair[1], outef, mapped_reads_1, 
+                mapped_reads_2, exon_boundaries)    
         
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2])
