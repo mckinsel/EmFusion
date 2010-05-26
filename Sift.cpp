@@ -7,8 +7,20 @@
 #include "FastaEntry.h"
 #include "Read.h"
 
+bool is_low_complexity(string seq) {
 
-string BAD_STRING = "AAAAAAAAAAAAAAAAAAAAAAAAA";
+	string polyA = "AAAAAAAAAAAAAAAAAA";
+	string polyT = "TTTTTTTTTTTTTTTTTT";
+	size_t foundpolyA = seq.find(polyA);
+	size_t foundpolyT = seq.find(polyT);
+
+	if(foundpolyA == string::npos && foundpolyT == string::npos){
+		return false;
+	} else {
+		return true;
+	}
+
+}
 
 void clear_bowtie_vector(vector<BowtieEntry*> & btv) {
   for(unsigned int i = 0; i < btv.size(); i++) {
@@ -190,16 +202,15 @@ int Sift_main(int argc, char * argv[]) {
 
         for(unsigned int i = 0; i < bowtieentries1.size(); i++){
           for(unsigned int j = 0; j < bowtieentries2.size(); j++){
-            size_t found1 = BAD_STRING.find(bowtieentries1.at(i)->read->sequence);
-            size_t found2 = BAD_STRING.find(bowtieentries2.at(j)->read->sequence);
+
             if(bowtieentries1.at(i)->strand == bowtieentries2.at(j)->strand) {
 //              Do nothing. The orientation is wrong.
-            } else if(found1 != string::npos || found2 != string::npos) {
-//              Also do nothing; it's a poly-A
+            } else if(is_low_complexity(bowtieentries1.at(i)->read->sequence) ||
+            		  is_low_complexity(bowtieentries2.at(j)->read->sequence)) {
             } else if(bowtieentries1.at(i)->mismatch_indices.size() > 3 ||
 		      bowtieentries2.at(j)->mismatch_indices.size() > 3) {
-		
-	    } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
+//				Too mnay mismatches
+	        } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
@@ -207,6 +218,8 @@ int Sift_main(int argc, char * argv[]) {
               discordant_mapping_stream << bowtieentries2.at(j)->mapped_gene() << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->position << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->position << "\t";
+              discordant_mapping_stream << bowtieentries1.at(i)->read->sequence.length() << "\t";
+              discordant_mapping_stream << bowtieentries2.at(j)->read->sequence.length() << "\t";
 
               for(unsigned int m = 0; m < bowtieentries1.at(i)->mismatch_indices.size(); m++){
             	discordant_mapping_stream << bowtieentries1.at(i)->mismatch_indices.at(m) << ",";
@@ -225,6 +238,8 @@ int Sift_main(int argc, char * argv[]) {
               discordant_mapping_stream << bowtieentries1.at(i)->mapped_gene() << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->position << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->position << "\t";
+              discordant_mapping_stream << bowtieentries2.at(j)->read->sequence.length() << "\t";
+              discordant_mapping_stream << bowtieentries1.at(i)->read->sequence.length() << "\t";
 
               for(unsigned int m = 0; m < bowtieentries2.at(j)->mismatch_indices.size(); m++){
                 discordant_mapping_stream << bowtieentries2.at(j)->mismatch_indices.at(m) << ",";
