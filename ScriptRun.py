@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 bowtie_dir =  '~/bowtie-0.10.1/'
 workspace_dir = '~/workspace/EmFusion/'
@@ -25,24 +26,24 @@ def main(fastq1, fastq2, reference):
                                   reference, fastq2, fastq2 + '.bowtie']), shell = True)
     p.wait()
     
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'PythonSort.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
                                    'bowtie', fastq1 + '.bowtie']), shell = True)
     p.wait()
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'PythonSort.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
                                    'bowtie', fastq2 + '.bowtie']), shell = True)
     p.wait()
     
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'PythonSort.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
                                    'fasta', '1.repeat']), shell = True)
     p.wait()
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'PythonSort.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
                                    'fasta', '2.repeat']), shell = True)
     p.wait()
     
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'PythonSort.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
                                    'fastq', fastq1]), shell = True)
     p.wait()
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'PythonSort.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
                                    'fastq', fastq2]), shell = True)
     p.wait()
 
@@ -55,7 +56,7 @@ def main(fastq1, fastq2, reference):
                                    fastq1 + '.discord.sorted']), shell = True)
     p.wait()
     
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'ExtendReference.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'ExtendReference.py',
                                    exon_structure_file, fastq1 + '.discord.sorted']),
                                    shell = True)
     p.wait()
@@ -65,7 +66,7 @@ def main(fastq1, fastq2, reference):
                                     shell = True)
     p.wait()
     
-    p = subprocess.Popen(' '.join(['python', workspace_dir, 'MakeFusionTranscripts.py',
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'MakeFusionTranscripts.py',
                                     exon_seq_file, fastq1 + '.discord.sorted.exons.uniq']),
                                     shell = True)
     p.wait()
@@ -83,6 +84,28 @@ def main(fastq1, fastq2, reference):
                                    'augmented_ref', '-1', fastq1, '-2', fastq2,
                                     fastq1 + '.pe.bowtie']), shell = True)
     p.wait()
+
+    p = subprocess.Popen(' '.join(['cat', 'pe_1.unmapped', 'pe_2.unmapped', '>',
+                                   'pe.unmapped']), shell = True)
+    p.wait()
+
+    p = subprocess.Popen(' '.join(['sh', workspace_dir + 'sortPEBowtie_Mapping.sh', 
+                                  fastq1 + '.pe.bowtie']), shell = True)
+    p.wait()
     
-    
-    
+    p = subprocess.Popen(' '.join(['sort -n -k 1,1', fastq1 + '.mapdist', '>',
+                                   fastq1 + '.mapdist.sorted']), shell = True)
+    p.wait()
+
+    p = subprocess.Popen(' '.join(['python', workspace_dir + 'getdistprob.py', 
+                                   fastq1 + '.mapdist.sorted', 'dist.prob']),
+                                   shell = True)
+    p.wait()
+
+    p = subprocess.Popen(' '.join([EM_bin, 'EM', fastq1 + '.pe.bowtie.sorted', 'dist.prob',
+                                   'augmented_ref.fa', 'pe.unmapped', '33']), shell = True)
+    p.wait()
+
+
+if __name__ == '__main__':
+    main(*sys.argv[1:])
