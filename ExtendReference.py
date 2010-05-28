@@ -5,7 +5,7 @@ import sys
 
 MAX_INSERT_SIZE = 800
 MIN_MAPPING_COUNT = 2
-MIN_GOOD_OVERLAP = 5
+MIN_GOOD_OVERLAP = 6
 
 def good_read_length(length, mismatches):
     
@@ -18,7 +18,19 @@ def good_read_length(length, mismatches):
         if good_count >= MIN_GOOD_OVERLAP:
             break
     return out_len
-        
+
+def good_read_start(start, length, mismatches):
+    
+    base = int(start)
+    out_start = int(start)
+    good_count = 0
+    while out_start < base + length - 1:
+        if (out_start - base) not in mismatches:
+            good_count += 1
+        out_start += 1
+        if good_count >= MIN_GOOD_OVERLAP:
+            break
+    return out_start
 
 def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2, 
         exon_bounds_1, exon_bounds_2, outfileh, read_status = [], 
@@ -60,9 +72,9 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
     if 'source' in v or 'sink' in v:
         exon_start, exon_end = (-1, -1)
     elif current_gene == 1:
-        exon_start, exon_end = exon_bounds_1[v]
+        exon_start, exon_end = exon_bounds_1[v[2:]]
     elif current_gene == 2:
-        exon_start, exon_end = exon_bounds_2[v]
+        exon_start, exon_end = exon_bounds_2[v[2:]]
     
 #    print "seen reads"
 #    pprint(seen_reads)
@@ -111,14 +123,14 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
                 working_read_status[status_index][1] += (exon_end - exon_start)
     
     #Now, we see if we've come to the end of the line in gene 2
-    if not fail and v == secondgenename + 'sink':
+    if not fail and v == '2-' + secondgenename + 'sink':
 #        print "at sink"
 #        print open_reads
         #Make sure no reads are left open
         if len(open_reads) == 0:
             outfileh.write(firstgenename + '.' + secondgenename + '\t' + \
                             str(length_in_1) + '\t')
-            outfileh.write('\t'.join(exon_list[1:]))
+            outfileh.write('\t'.join([k[2:] for k in exon_list[1:]]))
             outfileh.write('\n')
             
     
@@ -141,25 +153,27 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
 
 def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, mapped_reads_1, 
                       mapped_reads_2, exon_dict):
-        
-    g1 = nx.union(eg1, eg2)
+    
+#    print gene1, gene2
+#    print set(eg1.nodes()).intersection(eg2.nodes())
+    g1 = nx.union(eg1, eg2, rename = ('1-', '2-'))
     
     for node1 in eg1.nodes():
-        g1.node[node1] = eg1.node[node1]
+        g1.node['1-' + node1] = eg1.node[node1]
     for node2 in eg2.nodes():
-        g1.node[node2] = eg2.node[node2]   
+        g1.node['2-' + node2] = eg2.node[node2]   
         
     for node1 in eg1.nodes():
-        g1.node[node1]['graph'] = 1
+        g1.node['1-' + node1]['graph'] = 1
         
     for node2 in eg2.nodes():
-        g1.node[node2]['graph'] = 2 
+        g1.node['2-' + node2]['graph'] = 2 
         
     for node1 in eg1.nodes():
         for node2 in eg2.nodes():
             if node1 not in (gene1 + "source", gene1 + "sink") and \
                node2 not in (gene2 + "source", gene2 + "sink"):
-                g1.add_edge(node1, node2)
+                g1.add_edge('1-' + node1, '2-' + node2)
                 
     exon_bounds_1 = exon_dict[gene1]
     exon_bounds_2 = exon_dict[gene2]
@@ -175,7 +189,7 @@ def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, mapped_reads_1,
 #    print "exon_bounds_2"
 #    pprint(exon_bounds_2.items())
     
-    dfs(gene1 + "source", g1, gene1, gene2, mapped_reads_1, mapped_reads_2,
+    dfs('1-' + gene1 + "source", g1, gene1, gene2, mapped_reads_1, mapped_reads_2,
         exon_bounds_1, exon_bounds_2, outfileh)
 
     
@@ -321,12 +335,14 @@ def main(exonfilename, tpdmfilename):
         read_set.add(tpdm_d['read_id'])
         
         
-        read1_start = tpdm_d['pos1']
+        read1_start = good_read_start(tpdm_d['pos1'], tpdm_d['length1'], 
+                                                        tpdm_d['mismatches1'])
         read1_end = tpdm_d['pos1'] + good_read_length(tpdm_d['length1'], 
                                                       tpdm_d['mismatches1'])
         mapped_reads_1.append( (tpdm_d['read_id'], read1_start, read1_end) )
         
-        read2_start = tpdm_d['pos2']
+        read2_start = good_read_start(tpdm_d['pos2'], tpdm_d['length2'], 
+                                                        tpdm_d['mismatches2'])
         read2_end = tpdm_d['pos2'] + good_read_length(tpdm_d['length2'], 
                                                       tpdm_d['mismatches2'])
         mapped_reads_2.append( (tpdm_d['read_id'], read2_start, read2_end) )
