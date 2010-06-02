@@ -13,15 +13,14 @@ class psl_iterator(object):
     def next(self):
         nl = self._file.readline()
         
-        
         if len(nl) == 0:
             return None
         else:
             nl_list = nl.strip('\n').split('\t')
-            while len(nl_list) < 15 or nl_list[0] == 'match':
+            while len(nl_list) < 15 or nl_list[0] == 'match' or nl_list[1] == 'match':
                 nl = self._file.readline()
                 nl_list = nl.strip('\n').split('\t')
-        
+
         match_count = int(nl_list[0])
         mismatch_count = int(nl_list[1])
         read_id = nl_list[9]
@@ -32,7 +31,7 @@ class psl_iterator(object):
         
         return {'match_count':match_count, 'mismatch_count':mismatch_count,
                 'read_id':read_id, 'mapping':mapping, 'mapping_start':mapping_start,
-                'mapping_end':mapping_end}
+                'mapping_end':mapping_end, 'read_length':read_length}
         
         
 
