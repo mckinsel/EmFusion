@@ -65,6 +65,7 @@ int Sift_main(int argc, char * argv[]) {
   ifstream buststream1;
   ifstream buststream2;
 
+
   if(bustfiles) {
     buststream1.open(bustfile1);
     buststream2.open(bustfile2);
@@ -77,6 +78,8 @@ int Sift_main(int argc, char * argv[]) {
   ofstream discordant_mapping_stream(strcat(outfile, ".discord"));
   strcpy(outfile, fastqfile1);
   ofstream unmapped_fasta_stream(strcat(outfile, ".unmapped.fasta"));
+  strcpy(outfile, fastqfile1);
+  ofstream discordfastastream(strcat(outfile, ".discord.fasta"));
 
   Read read1(offset);
   Read read2(offset);
@@ -167,11 +170,6 @@ int Sift_main(int argc, char * argv[]) {
       sort(genes1.begin(), genes1.end());
       sort(genes2.begin(), genes2.end());
 
-      for(unsigned int i = 0; i < genes1.size(); i++) {
-      }
-
-      for(unsigned int i = 0; i < genes2.size(); i++) {
-      }
       vector<string> g_intersection(genes1.size() + genes2.size());
       vector<string>::iterator end_it;
       end_it = set_intersection(genes1.begin(), genes1.end(), genes2.begin(), genes2.end(), g_intersection.begin());
@@ -198,7 +196,9 @@ int Sift_main(int argc, char * argv[]) {
           genes.insert(bowtieentries2.at(j)->mapped_gene());
         }
 
-        if(genes.size() > 10) continue;
+        if(genes.size() > 20) continue;
+
+        bool write = false;
 
         for(unsigned int i = 0; i < bowtieentries1.size(); i++){
           for(unsigned int j = 0; j < bowtieentries2.size(); j++){
@@ -207,9 +207,9 @@ int Sift_main(int argc, char * argv[]) {
 //              Do nothing. The orientation is wrong.
             } else if(is_low_complexity(bowtieentries1.at(i)->read->sequence) ||
             		  is_low_complexity(bowtieentries2.at(j)->read->sequence)) {
-            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 3 ||
-		      bowtieentries2.at(j)->mismatch_indices.size() > 3) {
-//				Too mnay mismatches
+            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 2 ||
+		      bowtieentries2.at(j)->mismatch_indices.size() > 2) {
+//				Too many mismatches
 	        } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
@@ -229,6 +229,7 @@ int Sift_main(int argc, char * argv[]) {
                 discordant_mapping_stream << bowtieentries2.at(j)->mismatch_indices.at(m) << ",";
               }
               discordant_mapping_stream << endl;
+              write = true;
 
             } else if (bowtieentries1.at(i)->strand == "-" && bowtieentries2.at(j)->strand == "+") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
@@ -249,12 +250,20 @@ int Sift_main(int argc, char * argv[]) {
                 discordant_mapping_stream << bowtieentries1.at(i)->mismatch_indices.at(m) << ",";
               }
               discordant_mapping_stream << endl;
+              write = true;
+
 
             } else {
               cout << "THE PROGRAM IS BROKEN!" << endl;
               exit(1);
             }
           }
+        }
+        if(write) {
+        	discordfastastream << ">" << bowtieentries1.at(0)->read_id << endl;
+        	discordfastastream << bowtieentries1.at(0)->read->sequence << endl;
+        	discordfastastream << ">" << bowtieentries2.at(0)->read_id << endl;
+        	discordfastastream << bowtieentries2.at(0)->read->sequence << endl;
         }
       }
     }
