@@ -148,15 +148,24 @@ if __name__ == '__main__':
     if sys.argv[1] == 'fastq':
         fastqfile = sys.argv[2]
         batch_sort(fastqfile, fastqfile + '.tmp', tempdirs=['./'], re_pattern=fastq_re)
+        assert os.path.filesize(fastqfile) == os.path.filesize(fastqfile + '.tmp')
         os.remove(fastqfile)
         os.rename(fastqfile + '.tmp', fastqfile)
     elif sys.argv[1] == 'fasta':
         filename = sys.argv[2]
         batch_sort(filename, filename + '.tmp', tempdirs=['./'], re_pattern=fasta_re)
+        assert os.path.filesize(filename) == os.path.filesize(filename + '.tmp')
         os.remove(filename)
         os.rename(filename + '.tmp', filename)
     elif sys.argv[1] == 'bowtie':
         filename = sys.argv[2]
         batch_sort(filename, filename + '.tmp', tempdirs=['./'], re_pattern = '.*\n')
+        assert os.path.filesize(filename) == os.path.filesize(filename + '.tmp')
+        os.remove(filename)
+        os.rename(filename + '.tmp', filename)
+    elif sys.argv[1] == 'paired_bowtie':
+        filename = sys.argv[2]
+        batch_sort(filename, filename + '.tmp', tempdirs=['./'], re_pattern = '.*\n.*\n')
+        assert os.path.filesize(filename) == os.path.filesize(filename + '.tmp')
         os.remove(filename)
         os.rename(filename + '.tmp', filename)
