@@ -235,8 +235,13 @@ def parse_line(efline):
 
     return out
 
-def main(exonfilename, tpdmfilename):
+def main(exonfilename, tpdmfilename, concordantfilename):
     
+    
+    concordantset = set()
+    for line in file(concordantfilename):
+        concordantset.add(line.strip())
+
     
 #==============================================================================
 #     First, build the exon_graph.
@@ -310,10 +315,13 @@ def main(exonfilename, tpdmfilename):
             print linecount
         
         tpdm_d = parse_tpdm_line(line)
+
+        if tpdm_d['read_id'] in concordantset:
+            continue
         
         if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair:
             
-            if current_transcript_pair[0] and len(read_set) > MIN_MAPPING_COUNT:
+            if current_transcript_pair[0] and len(read_set) >= MIN_MAPPING_COUNT:
                 write_exon_orders(exon_graph1, exon_graph2, 
                     current_transcript_pair[0],current_transcript_pair[1], 
                     outef, mapped_reads_1, mapped_reads_2, exon_boundaries)
@@ -332,7 +340,7 @@ def main(exonfilename, tpdmfilename):
 #         the start site of the kth exon.
 #===============================================================================
               
-        read_set.add(tpdm_d['read_id'])
+        read_set.add((tpdm_d['pos1'], tpdm_d['pos2']))
         
         
         read1_start = good_read_start(tpdm_d['pos1'], tpdm_d['length1'], 
@@ -357,4 +365,4 @@ def main(exonfilename, tpdmfilename):
                 mapped_reads_2, exon_boundaries)    
         
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3])
