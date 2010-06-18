@@ -205,10 +205,10 @@ int Sift_main(int argc, char * argv[]) {
 
             if(bowtieentries1.at(i)->strand == bowtieentries2.at(j)->strand) {
 //              Do nothing. The orientation is wrong.
-            } else if(is_low_complexity(bowtieentries1.at(i)->read->sequence) ||
-            		  is_low_complexity(bowtieentries2.at(j)->read->sequence)) {
-            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 2 ||
-		      bowtieentries2.at(j)->mismatch_indices.size() > 2) {
+//            } else if(is_low_complexity(bowtieentries1.at(i)->read->sequence) ||
+  //          		  is_low_complexity(bowtieentries2.at(j)->read->sequence)) {
+            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 1 ||
+		      bowtieentries2.at(j)->mismatch_indices.size() > 1) {
 //				Too many mismatches
 	        } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
