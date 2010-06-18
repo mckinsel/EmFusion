@@ -12,14 +12,15 @@ def main(mapped_distance_file, ofile):
     for line in file(mapped_distance_file):
         val = int(line.strip())
         if val != curr_val:
-            if curr_val:
+            if curr_val is not None:
                 prob_dict[curr_val] = curr_count
             curr_count = 1
             curr_val = val
         else:
             curr_count += 1
         total_count +=1
-        
+        prob_dict[curr_val] = curr_count
+
     for val in prob_dict:
         freq = prob_dict[val]
         prob = freq/total_count
