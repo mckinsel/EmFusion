@@ -125,8 +125,8 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 
 	ifstream EMstream;
 	ifstream randomstream;
-
 	EMstream.open(EMfilename.c_str());
+//	cout << "Opened " << EMfilename << endl;
 	randomstream.open(randomfilename.c_str());
 
 	EM_Map * emmap;
@@ -157,6 +157,10 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 		read_sums[remmap->base_read_id] += remmap->em_prob(th[remmap->isoform]);
 	}
 
+//	for(longdoubleumap::iterator it = read_sums.begin(); it != read_sums.end(); it++) {
+//		cout << "after random, read_sums at " << it->first << " is " << it->second << endl;
+//	}
+
 //	cout << "Done reading BT file the first time." << endl;
 	counter = 0;
 	EMstream.close();
@@ -178,6 +182,7 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 			for(unsigned int i=0; i < emmap_vect.size(); i++) {
 				sumterm += emmap_vect.at(i)->em_prob(th[current_isoform_id])/read_sums[emmap_vect.at(i)->base_read_id];
 			}
+
 			newth[current_isoform_id] = sumterm/N;
 			clear_EM_Map_vector(emmap_vect);
 		}
@@ -193,6 +198,7 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 	for(unsigned int i=0; i < emmap_vect.size(); i++) {
 		sumterm += emmap_vect.at(i)->em_prob(th[current_isoform_id])/read_sums[emmap_vect.at(i)->base_read_id];
 	}
+
 	newth[current_isoform_id] = sumterm/N;
 	clear_EM_Map_vector(emmap_vect);
 
@@ -206,6 +212,7 @@ void EM_Update( string EMfilename, string randomfilename, longdoubleumap & th, l
 	for(unsigned int i=0; i < emmap_vect.size(); i++) {
 		sumterm += emmap_vect.at(i)->em_prob(th[current_isoform_id])/read_sums[emmap_vect.at(i)->base_read_id];
 	}
+
 	newth[current_isoform_id] = sumterm/N;
 	clear_EM_Map_vector(emmap_vect);
 
@@ -230,7 +237,7 @@ int EM_main(int argc, char * argv[]){
 	cout << "Processed arguments." << endl;
 //	Get Markov Chain for unmapped
 
-	MarkovChain mc(12, 5);
+	MarkovChain mc(12, 1);
 	double log_unmapped_prob;
 	log_unmapped_prob = getMarkovChain(unmapped_fasta, mc);
 
@@ -300,7 +307,6 @@ int EM_main(int argc, char * argv[]){
 
 		EM_Map * pemmap;
 		pemmap = new EM_Map(bt1, bt2, dist_prob, isoform_lengths);
-
 		read_iterator = seen_readids.find(pemmap->base_read_id);
 		if(read_iterator == seen_readids.end()) {
 			Random_EM_Map * prem;
@@ -313,7 +319,7 @@ int EM_main(int argc, char * argv[]){
 		emintstream << *pemmap;
 		delete pemmap;
 		counter++;
-		if(counter%1000000==0) cout << "Reading Bowtie pair " << counter << endl;
+		if(counter%1000==0) cout << "Reading Bowtie pair " << counter << endl;
 	}
 	emintstream.close();
 	randomstream.close();
@@ -339,7 +345,7 @@ int EM_main(int argc, char * argv[]){
 
 	ofstream intoutstream;
 
-	while(log_diff > -1){
+	while(log_diff > 10e-8){
 		cout << "Starting iteration " << count << endl;
 		if(count % 10 == 0) oldll = log_likelihood(EMfilename, randomfilename, theta);
 		EM_Update(EMfilename, randomfilename, theta, newtheta, N);
@@ -354,7 +360,7 @@ int EM_main(int argc, char * argv[]){
 		if(count % 10 == 0) {
 			intoutstream.open("em_output.int" );
 			for(longdoubleumap::iterator thiter=newtheta.begin(); thiter != newtheta.end(); thiter++){
-         		       intoutstream << thiter->first << "\t" << thiter->second << endl;
+         		       intoutstream << thiter->first << "\t" << setprecision(35) << thiter->second << endl;
 		        }
 			intoutstream.close();
 		}
@@ -369,10 +375,106 @@ int EM_main(int argc, char * argv[]){
 		outstream << thiter->first << "\t" << thiter->second << endl;
 	}
 
-//	cout << "Final mapped log likelihood : " << setprecision(15) << newll << endl;
+	cout << "Final mapped log likelihood : " << setprecision(15) << newll << endl;
 	cout << "Unmapped log likelihood : " << setprecision(15) << log_unmapped_prob << endl;
 	cout << "Number of reads : " << N << endl;
 	cout << "Number of isoforms : " << M << endl;
+
+
+	ifstream EMstream;
+	EMstream.open(EMfilename);
+	EM_Map * emmap;
+	emmap = new EM_Map();
+
+	bool is_fusion;
+
+	tr1::unordered_map<string, bool> is_read_fusion;
+	tr1::unordered_map<string, bool>::iterator is_read_fusion_iterator;
+
+	while(EMstream >> *emmap && !EMstream.eof()) {
+
+		if(emmap->isoform.substr(0,2) == "F_"){
+			is_fusion = true;
+		} else {
+			is_fusion = false;
+		}
+
+		is_read_fusion_iterator = is_read_fusion.find(emmap->base_read_id);
+		if(is_read_fusion_iterator == is_read_fusion.end()){
+			is_read_fusion[emmap->base_read_id] = is_fusion;
+		} else {
+			if(is_read_fusion[emmap->base_read_id] == true){ //If it's true, set it to what we find. If it's false, it stays false
+				is_read_fusion[emmap->base_read_id] = is_fusion;
+			}
+		}
+	}
+
+	EMstream.close();
+	EMstream.open(EMfilename);
+
+	longdoubleumap f_read_sums;
+	longdoubleumap::iterator f_read_iterator;
+
+	while(EMstream >> *emmap && !EMstream.eof()) {
+		if(!is_read_fusion[emmap->base_read_id]) continue;
+		f_read_iterator = f_read_sums.find(emmap->base_read_id);
+		if (f_read_iterator == f_read_sums.end()) {
+			f_read_sums[emmap->base_read_id] = 0;
+		}
+		f_read_sums[emmap->base_read_id] += emmap->em_prob(theta[emmap->isoform]);
+	}
+	EMstream.close();
+
+
+	ifstream f_randomstream;
+	f_randomstream.open(randomfilename);
+	Random_EM_Map * remmap;
+	remmap = new Random_EM_Map();
+
+	while (f_randomstream >> *remmap && !f_randomstream.eof()) {
+		f_read_sums[remmap->base_read_id] += remmap->em_prob(theta[remmap->isoform]);
+	}
+
+	f_randomstream.close();
+	delete remmap;
+
+
+
+	EMstream.open(EMfilename);
+	long double read_isoform_prob;
+	longdoubleumap final_fusion_counts;
+	longdoubleumap final_fusion_probs;
+	longdoubleumap::iterator ffc_iterator;
+	string f_current_isoform_id = "";
+
+	while (EMstream >> *emmap && !EMstream.eof()) {
+		if(!is_read_fusion[emmap->base_read_id]) continue;
+		read_isoform_prob = emmap->em_prob(theta[emmap->isoform]) / f_read_sums[emmap->base_read_id];
+		ffc_iterator = final_fusion_counts.find(emmap->isoform);
+		if(ffc_iterator == final_fusion_counts.end()){
+			final_fusion_counts[emmap->isoform] = 0;
+			final_fusion_probs[emmap->isoform] = 1;
+		}
+		final_fusion_counts[emmap->isoform] += read_isoform_prob;
+		final_fusion_probs[emmap->isoform] *= (1 - read_isoform_prob);
+	}
+
+	delete emmap;
+
+	ofstream finaloutstream;
+	ofstream finalprobstream;
+
+	finaloutstream.open("fusion_counts");
+	for(ffc_iterator=final_fusion_counts.begin(); ffc_iterator != final_fusion_counts.end(); ffc_iterator++){
+		finaloutstream << ffc_iterator->first << "\t" << ffc_iterator->second << endl;
+	}
+	finaloutstream.close();
+
+	finalprobstream.open("fusion_probs");
+	for(ffc_iterator=final_fusion_probs.begin(); ffc_iterator != final_fusion_probs.end(); ffc_iterator++){
+		finalprobstream << ffc_iterator->first << "\t" << 1 - ffc_iterator->second << endl;
+	}
+	finalprobstream.close();
 	return 0;
 
 }
