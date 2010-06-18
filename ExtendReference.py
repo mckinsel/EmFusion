@@ -4,7 +4,8 @@ import networkx as nx
 import sys
 
 MAX_INSERT_SIZE = 800
-MIN_MAPPING_COUNT = 2
+MIN_INSERT_SIZE = 50
+MIN_MAPPING_COUNT = 1
 MIN_GOOD_OVERLAP = 6
 
 def good_read_length(length, mismatches):
@@ -127,7 +128,18 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
 #        print "at sink"
 #        print open_reads
         #Make sure no reads are left open
-        if len(open_reads) == 0:
+        g1_exon_count = len([k for k in g.nodes() if k[:2] == '1-']) - 1 #Won't include sink
+        g2_exon_count = len([k for k in g.nodes() if k[:2] == '2-']) - 2 #Won't include source or sink
+        
+        exons_from_g1 = len([k for k in exon_list if k[:2] == '1-'])
+        exons_from_g2 = len([k for k in exon_list if k[:2] == '2-'])
+#        print "all nodes", g.nodes()
+#        print 'g1_ec', [k for k in g.nodes() if k[:2] == '1-']
+#        print 'g2_ec', [k for k in g.nodes() if k[:2] == '2-']
+#        print 'ec1', [k for k in exon_list if k[:2] == '1-']
+#        print 'ec2', [k for k in exon_list if k[:2] == '2-']
+
+        if len(open_reads) == 0: # and g1_exon_count != exons_from_g1 and g2_exon_count != exons_from_g2:
             outfileh.write(firstgenename + '.' + secondgenename + '\t' + \
                             str(length_in_1) + '\t')
             outfileh.write('\t'.join([k[2:] for k in exon_list[1:]]))
