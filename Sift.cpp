@@ -9,8 +9,8 @@
 
 bool is_low_complexity(string seq) {
 
-	string polyA = "AAAAAAAAAAAAAAAAAA";
-	string polyT = "TTTTTTTTTTTTTTTTTT";
+	string polyA = "AAAAAAAAAAAAAAAAA";
+	string polyT = "TTTTTTTTTTTTTTTTT";
 	size_t foundpolyA = seq.find(polyA);
 	size_t foundpolyT = seq.find(polyT);
 
@@ -79,7 +79,7 @@ int Sift_main(int argc, char * argv[]) {
   strcpy(outfile, fastqfile1);
   ofstream unmapped_fasta_stream(strcat(outfile, ".unmapped.fasta"));
   strcpy(outfile, fastqfile1);
-  ofstream discordfastastream(strcat(outfile, ".discord.fasta"));
+  ofstream discordfastqstream(strcat(outfile, ".discord.fastq"));
 
   Read read1(offset);
   Read read2(offset);
@@ -188,15 +188,33 @@ int Sift_main(int argc, char * argv[]) {
 //        cout << "Only discordant" << endl;
 //        Write out discordant mappings
 
-        set<string> genes;
+        set<string> genes1;
+        set<string> genes2;
+        set<string> genecombo;
+        set<string>::iterator setiter;
         for(unsigned int i = 0; i < bowtieentries1.size(); i++){
-          genes.insert(bowtieentries1.at(i)->mapped_gene());
+            if(bowtieentries1.at(i)->mismatch_indices.size() == 0){
+                genes1.insert(bowtieentries1.at(i)->mapped_gene());
+            }
         }
         for(unsigned int j = 0; j < bowtieentries2.size(); j++){
-          genes.insert(bowtieentries2.at(j)->mapped_gene());
+            if(bowtieentries2.at(j)->mismatch_indices.size() == 0){
+                genes2.insert(bowtieentries2.at(j)->mapped_gene());
+            }
         }
 
-        if(genes.size() > 20) continue;
+        for(setiter=genes1.begin(); setiter!=genes1.end(); setiter++){
+            genecombo.insert(*setiter);
+        }
+        for(setiter=genes2.begin(); setiter!=genes2.end(); setiter++){
+            genecombo.insert(*setiter);
+        }
+
+
+        if(genecombo.size() > 10){
+                cout << "Yikes, a lot of genes from " << bowtieentries1.at(0)->read_id << " " << genes1.size();
+                cout << " " << bowtieentries2.at(0)->read_id << " " << genes2.size() << " for a total of " << genecombo.size() << endl;
+        }
 
         bool write = false;
 
@@ -207,13 +225,13 @@ int Sift_main(int argc, char * argv[]) {
 //              Do nothing. The orientation is wrong.
 //            } else if(is_low_complexity(bowtieentries1.at(i)->read->sequence) ||
   //          		  is_low_complexity(bowtieentries2.at(j)->read->sequence)) {
-            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 1 ||
-		      bowtieentries2.at(j)->mismatch_indices.size() > 1) {
+            } else if(bowtieentries1.at(i)->mismatch_indices.size() > 2 ||
+		      bowtieentries2.at(j)->mismatch_indices.size() > 2) {
 //				Too many mismatches
 	        } else if(bowtieentries1.at(i)->strand == "+" && bowtieentries2.at(j)->strand == "-") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
-              discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
-              discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
+              discordant_mapping_stream << bowtieentries1.at(i)->full_mapped_transcript() << "\t";
+              discordant_mapping_stream << bowtieentries2.at(j)->full_mapped_transcript() << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->mapped_gene() << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->mapped_gene() << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->position << "\t";
@@ -233,8 +251,8 @@ int Sift_main(int argc, char * argv[]) {
 
             } else if (bowtieentries1.at(i)->strand == "-" && bowtieentries2.at(j)->strand == "+") {
               discordant_mapping_stream << bowtieentries1.at(i)->base_read_id << "\t";
-              discordant_mapping_stream << bowtieentries2.at(j)->mapped_transcript() << "\t";
-              discordant_mapping_stream << bowtieentries1.at(i)->mapped_transcript() << "\t";
+              discordant_mapping_stream << bowtieentries2.at(j)->full_mapped_transcript() << "\t";
+              discordant_mapping_stream << bowtieentries1.at(i)->full_mapped_transcript() << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->mapped_gene() << "\t";
               discordant_mapping_stream << bowtieentries1.at(i)->mapped_gene() << "\t";
               discordant_mapping_stream << bowtieentries2.at(j)->position << "\t";
@@ -260,10 +278,12 @@ int Sift_main(int argc, char * argv[]) {
           }
         }
         if(write) {
-        	discordfastastream << ">" << bowtieentries1.at(0)->read_id << endl;
-        	discordfastastream << bowtieentries1.at(0)->read->sequence << endl;
-        	discordfastastream << ">" << bowtieentries2.at(0)->read_id << endl;
-        	discordfastastream << bowtieentries2.at(0)->read->sequence << endl;
+            bowtieentries1.at(0)->read->write_as_fastq(discordfastqstream);
+            bowtieentries2.at(0)->read->write_as_fastq(discordfastqstream);
+//        	discordfastqstream << ">" << bowtieentries1.at(0)->read_id << endl;
+//        	discordfastqstream << bowtieentries1.at(0)->read->sequence << endl;
+//        	discordfastqstream << ">" << bowtieentries2.at(0)->read_id << endl;
+//        	discordfastqstream << bowtieentries2.at(0)->read->sequence << endl;
         }
       }
     }

@@ -5,12 +5,13 @@ from itertools import islice, cycle
 from tempfile import gettempdir
 import os
 import re
+import subprocess
 import sys
 import tempfile
 
+FASTQ = False
 
-
-fastq_re = r'@.+\n[ACTGN]+\n\+.*\n.+[$$\n]'
+fastq_re = r'@.+\n[ACTGN]+\n\+.*\n.+\n'
 fasta_re = r'>(.+\n)(\S+\n(?!>))*(\S+\n(?=(\n*>|\n*$$)))'
 
 def merge(chunks,key=None):
@@ -26,7 +27,7 @@ def merge(chunks,key=None):
         except StopIteration:
             try:
                 chunk.file.close()
-                os.remove(chunk.file.name)
+                #os.remove(chunk.file.name)
                 chunks.remove(chunk)
             except:
                 pass
@@ -109,7 +110,9 @@ class multi_file(file):
     def __init__(self, name, mode = 'rU', re_pattern = '.*\n', buffsize = 1024):
         self.file = file(name, mode)
         #print 're_pattern is ' + re_pattern
+
         self._re_pattern = re.compile(re_pattern)
+
         self._buffer = ''
         self._buffsize = buffsize
         self._EOF = False
@@ -123,6 +126,8 @@ class multi_file(file):
             self._EOF = True
         #print nextbytes
         self._buffer += nextbytes
+#        if FASTQ and self._EOF:
+#            self._buffer += '\n'
     
     def next(self):
         #print 'called next', self._buffer
@@ -140,15 +145,27 @@ class multi_file(file):
         
         m_string = m.group(0)
         self._buffer = self._buffer[m.end():]
+        
+#        if FASTQ and self._EOF and \
+#           len(self._buffer) == 0 and \
+#           m_string[-1] == '\n':
+#            m_string = m_string[:-1]
+        
         return m_string
         
 
 if __name__ == '__main__':
     
     if sys.argv[1] == 'fastq':
+        FASTQ = True
         fastqfile = sys.argv[2]
         batch_sort(fastqfile, fastqfile + '.tmp', tempdirs=['./'], re_pattern=fastq_re)
         assert os.path.getsize(fastqfile) == os.path.getsize(fastqfile + '.tmp')
+        p = subprocess.Popen('wc -l ' + fastqfile, shell = True, stdout = subprocess.PIPE)
+        count1 = int(p.communicate()[0].split()[0])
+        p = subprocess.Popen('wc -l ' + fastqfile + '.tmp', shell = True, stdout = subprocess.PIPE)
+        count2 = int(p.communicate()[0].split()[0])
+        assert count1 == count2
         os.remove(fastqfile)
         os.rename(fastqfile + '.tmp', fastqfile)
     elif sys.argv[1] == 'fasta':

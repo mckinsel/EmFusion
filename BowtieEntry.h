@@ -26,6 +26,7 @@ private:
 	vector<int> get_indices(string mismatchstring);
 	string _mapped_gene;
 	string _mapped_transcript;
+	string _full_mapped_transcript;
 	void parse_mapping();
 
 public:
@@ -49,6 +50,7 @@ public:
 
 	string mapped_gene();
 	string mapped_transcript();
+	string full_mapped_transcript();
 
 };
 

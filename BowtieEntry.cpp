@@ -97,19 +97,17 @@ long double BowtieEntry::mapping_probability() {
 	long double P;
 
 	P = 1;
-
+//    cout << read->quality->quality_str << endl;
 	for(unsigned int i=0; i<read->quality->quality_str.size(); i++){
 		if(find(mismatch_indices.begin(), mismatch_indices.end(), i) == mismatch_indices.end()){ //if match
-		//	cout << "error_prob at " << i << " " <<  read->quality->error_probabilities[i] <<endl;
 			P *= (1 - read->quality->error_probabilities[i]);
 		} else { //if mismatch
-		//	cout << "error_prob at " << i << " " <<  read->quality->error_probabilities[i] <<endl;
 			P *= read->quality->error_probabilities[i]/3;
 		}
 
 	}
 
-
+//    cout << "P=" << P << endl;
 	return P;
 }
 
@@ -121,6 +119,12 @@ string BowtieEntry::mapped_transcript() {
 	if(_mapped_transcript.length() > 0) {return _mapped_transcript;}
 	else {parse_mapping(); return _mapped_transcript;}
 }
+
+string BowtieEntry::full_mapped_transcript() {
+	if(_full_mapped_transcript.length() > 0) {return _full_mapped_transcript;}
+	else {parse_mapping(); return _full_mapped_transcript;}
+}
+
 
 void BowtieEntry::parse_mapping() {
 
@@ -135,6 +139,16 @@ void BowtieEntry::parse_mapping() {
 
 	maptok = strtok(NULL, "|");
 	_mapped_gene = string(maptok);
+
+	maptok = strtok(NULL, "|");
+	maptok = strtok(NULL, "|");
+	string chromosome = string(maptok);
+	maptok = strtok(NULL, "|");
+	string start = string(maptok);
+	maptok = strtok(NULL, "|");
+	string end = string(maptok);
+
+	_full_mapped_transcript = _mapped_transcript + "|" + chromosome + "|" + start + "|" + end;
 
 	delete[] cstr;
 

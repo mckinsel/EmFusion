@@ -12,4 +12,7 @@ int main(int argc, char * argv[]){
 	else if (strcmp(argv[1],"test") == 0) {
 		return Test_main(argc-1, argv+1);
 	}
+	else if (strcmp(argv[1],"join") == 0) {
+		return Join_main(argc-1, argv+1);
+	}
 }

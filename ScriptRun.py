@@ -6,7 +6,7 @@ workspace_dir = '~/workspace/EmFusion/'
 
 EM_bin = workspace_dir + 'Release/EmFusion'
 bowtie_bin = bowtie_dir + 'bowtie'
-bowtie_build_bin = bowtie_dir + 'bowtie_build'
+bowtie_build_bin = bowtie_dir + 'bowtie-build'
 
 exon_structure_file = ''
 exon_seq_file = ''
@@ -16,14 +16,17 @@ pe_bowtie_flags = '-a -p 4 -y -X 800 -m 100 --nomaqround'
 
 offset = 33
 
-def main(fastq1, fastq2, reference):
+reference_root = ''
+reference_fasta = ''
+
+def main(fastq1, fastq2):
     
     
     p = subprocess.Popen(' '.join([bowtie_bin, initial_bowtie_flags, '--maxfa 1.repeat',
-                                  reference, fastq1, fastq1 + '.bowtie']), shell = True)
+                                  reference_root, fastq1, fastq1 + '.bowtie']), shell = True)
     p.wait()
     p = subprocess.Popen(' '.join([bowtie_bin, initial_bowtie_flags, '--maxfa 2.repeat',
-                                  reference, fastq2, fastq2 + '.bowtie']), shell = True)
+                                  reference_root, fastq2, fastq2 + '.bowtie']), shell = True)
     p.wait()
     
     p = subprocess.Popen(' '.join(['python', workspace_dir + 'PythonSort.py',
@@ -61,7 +64,7 @@ def main(fastq1, fastq2, reference):
                                    shell = True)
     p.wait()
     
-    p = subprocess.Popen(' '.join(['sort -k 2, -u', fastq1 + '.discord.sorted.exons', 
+    p = subprocess.Popen(' '.join(['sort -k 2 -u', fastq1 + '.discord.sorted.exons', 
                                    '>', fastq1 + '.discord.sorted.exons.uniq']),
                                     shell = True)
     p.wait()
@@ -72,12 +75,12 @@ def main(fastq1, fastq2, reference):
     p.wait()
     
     p = subprocess.Popen(' '.join(['cat', fastq1 + '.discord.sorted.exons.uniq.seqs',
-                                   reference + '.fa', '>', 'augmented_ref.fa']),
+                                   reference_fasta, '>', 'augmented_ref.fa']),
                                    shell = True)
     p.wait()
     
     p = subprocess.Popen(' '.join([bowtie_build_bin, '-o 0', 'augmented_ref.fa',
-                                   'augmented_ref']))
+                                   'augmented_ref']), shell = True)
     p.wait()
     
     p = subprocess.Popen(' '.join([bowtie_bin, pe_bowtie_flags, '--unfa pe.unmapped',

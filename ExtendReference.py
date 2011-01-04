@@ -1,12 +1,14 @@
 from copy import deepcopy
 import networkx as nx
 #import matplotlib.pyplot as plt
+from pprint import pprint
 import sys
 
-MAX_INSERT_SIZE = 800
-MIN_INSERT_SIZE = 50
-MIN_MAPPING_COUNT = 1
+MAX_INSERT_SIZE = 1000
+MIN_MAPPING_COUNT = 2 
 MIN_GOOD_OVERLAP = 6
+PREPENDED_SEQUENCE_LENGTH = 50
+POLY_A_LENGTH = 50
 
 def good_read_length(length, mismatches):
     
@@ -55,6 +57,9 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
 #    print "Exon list " 
 #    pprint(exon_list)
     
+    if sorted([k[0] for k in mapped_reads_1]) != sorted([k[0] for k in mapped_reads_2]):
+        pprint(sorted(mapped_reads_1))
+        pprint(sorted(mapped_reads_2))
     assert sorted([k[0] for k in mapped_reads_1]) == \
            sorted([k[0] for k in mapped_reads_2])
     
@@ -70,13 +75,22 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
     
     working_read_status = deepcopy(read_status)
     
+#    print 'exon_bounds_1', exon_bounds_1
+#    print 'exon_bounds_2', exon_bounds_2
     if 'source' in v or 'sink' in v:
         exon_start, exon_end = (-1, -1)
     elif current_gene == 1:
         exon_start, exon_end = exon_bounds_1[v[2:]]
     elif current_gene == 2:
         exon_start, exon_end = exon_bounds_2[v[2:]]
+
+    at_end_of_first_gene = False
+    if current_gene == 1:
+        if exon_end == max([k[1] for k in exon_bounds_1.values()]):
+            at_end_of_first_gene = True
     
+    at_start_of_second_gene = current_gene == 2 and exon_start == 0
+
 #    print "seen reads"
 #    pprint(seen_reads)
 #    print "open reads"
@@ -94,6 +108,8 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
     if working_read_status and max(k[1] for k in working_read_status) > \
                                                             MAX_INSERT_SIZE:
 #        print "FAILING BECAUSE INSERT SIZE", max(k[1] for k in working_read_status)
+#        working_read_status.sort(key=lambda x: x[1], reverse=True)
+#        print "FOR GENE", working_read_status[:10]
         fail = True
     
     
@@ -103,36 +119,49 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
     if not fail and current_gene == 1:
         for read_tuple in mapped_reads_1:
             if read_tuple[2] < exon_end and read_tuple[0] not in seen_reads:
-                working_read_status.append(
-                            [read_tuple[0], exon_end - read_tuple[2], 0]
-                            )
+                if at_end_of_first_gene: ##If we're at the end of the first gene, don't add to the 
+                                         ##gap size. This increases read-through sensitivity.
+                    working_read_status.append([read_tuple[0], 0, 0])
+                else:
+                    working_read_status.append(
+                                [read_tuple[0], exon_end - read_tuple[2], 0]
+                                )
 #                print "opening read " + read_tuple[0]
             elif read_tuple[0] in seen_reads:
                 status_index = [k[0] for k in working_read_status].index(read_tuple[0])
-                working_read_status[status_index][1] += (exon_end - exon_start)
+                if at_end_of_first_gene:
+                    pass
+                else:
+                    working_read_status[status_index][1] += (exon_end - exon_start)
     #If we're in gene 2, close the open reads that we hit and add the length of
     #the exon to those we don't
     elif not fail and current_gene == 2:
         for read_tuple in mapped_reads_2:
             if exon_start <= read_tuple[1] < exon_end:
                 status_index = [k[0] for k in working_read_status].index(read_tuple[0])
-                working_read_status[status_index][1] += read_tuple[1] - exon_start
+                if at_start_of_second_gene:
+                    pass
+                else:
+                    working_read_status[status_index][1] += read_tuple[1] - exon_start
                 working_read_status[status_index][2] = 1
 #                print "closing read " + read_tuple[0]
             elif read_tuple[0] in open_reads:
                 status_index = [k[0] for k in working_read_status].index(read_tuple[0])
-                working_read_status[status_index][1] += (exon_end - exon_start)
+                if at_start_of_second_gene: ##Again with not penalizing read-through ends
+                    pass
+                else:
+                    working_read_status[status_index][1] += (exon_end - exon_start)
     
     #Now, we see if we've come to the end of the line in gene 2
     if not fail and v == '2-' + secondgenename + 'sink':
 #        print "at sink"
-#        print open_reads
+#        print "open_reads", open_reads
         #Make sure no reads are left open
-        g1_exon_count = len([k for k in g.nodes() if k[:2] == '1-']) - 1 #Won't include sink
-        g2_exon_count = len([k for k in g.nodes() if k[:2] == '2-']) - 2 #Won't include source or sink
+#        g1_exon_count = len([k for k in g.nodes() if k[:2] == '1-']) - 1 #Won't include sink
+#        g2_exon_count = len([k for k in g.nodes() if k[:2] == '2-']) - 2 #Won't include source or sink
         
-        exons_from_g1 = len([k for k in exon_list if k[:2] == '1-'])
-        exons_from_g2 = len([k for k in exon_list if k[:2] == '2-'])
+#        exons_from_g1 = len([k for k in exon_list if k[:2] == '1-'])
+#        exons_from_g2 = len([k for k in exon_list if k[:2] == '2-'])
 #        print "all nodes", g.nodes()
 #        print 'g1_ec', [k for k in g.nodes() if k[:2] == '1-']
 #        print 'g2_ec', [k for k in g.nodes() if k[:2] == '2-']
@@ -141,7 +170,7 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
 
         if len(open_reads) == 0: # and g1_exon_count != exons_from_g1 and g2_exon_count != exons_from_g2:
             outfileh.write(firstgenename + '.' + secondgenename + '\t' + \
-                            str(length_in_1) + '\t')
+                            str(length_in_1 - PREPENDED_SEQUENCE_LENGTH) + '\t')
             outfileh.write('\t'.join([k[2:] for k in exon_list[1:]]))
             outfileh.write('\n')
             
@@ -164,7 +193,7 @@ def dfs(v, g, firstgenename, secondgenename, mapped_reads_1, mapped_reads_2,
 
 
 def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, mapped_reads_1, 
-                      mapped_reads_2, exon_dict):
+                      mapped_reads_2, exon_bounds_1, exon_bounds_2):
     
 #    print gene1, gene2
 #    print set(eg1.nodes()).intersection(eg2.nodes())
@@ -187,30 +216,19 @@ def write_exon_orders(eg1, eg2, gene1, gene2, outfileh, mapped_reads_1,
                node2 not in (gene2 + "source", gene2 + "sink"):
                 g1.add_edge('1-' + node1, '2-' + node2)
                 
-    exon_bounds_1 = exon_dict[gene1]
-    exon_bounds_2 = exon_dict[gene2]
-    
-#    print "calling dfs"
-#    print "mappedreads1"
-#    pprint(mapped_reads_1)
-#    print "mappedreads2"
-#    pprint(mapped_reads_2)
-#    
-#    print "exon_bounds_1"
-#    pprint(exon_bounds_1.items())
-#    print "exon_bounds_2"
-#    pprint(exon_bounds_2.items())
-    
+#    exon_bounds_1 = exon_dict[gene1]
+#    exon_bounds_2 = exon_dict[gene2]
+        
     dfs('1-' + gene1 + "source", g1, gene1, gene2, mapped_reads_1, mapped_reads_2,
         exon_bounds_1, exon_bounds_2, outfileh)
 
     
-def draw_graphs(exon_graph_d):
-    
-    for geneid in exon_graph_d:
-        nx.draw_circular(exon_graph_d[geneid])
-        plt.savefig(geneid +'.png')
-        plt.close()
+#def draw_graphs(exon_graph_d):
+#    
+#    for geneid in exon_graph_d:
+#        nx.draw_circular(exon_graph_d[geneid])
+#        plt.savefig(geneid +'.png')
+#        plt.close()
         
 def parse_tpdm_line(tpdmline):
     
@@ -221,8 +239,14 @@ def parse_tpdm_line(tpdmline):
     
     out['gene1'] = ts[3]
     out['gene2'] = ts[4]
-    out['transcript1'] = ts[1]
-    out['transcript2'] = ts[2]
+    out['transcript1'] = ts[1].split('|')[0]
+    out['chrom1'] = ts[1].split('|')[1]
+    out['tstart1'] = int(ts[1].split('|')[2])
+    out['tend1'] = int(ts[1].split('|')[3])
+    out['transcript2'] = ts[2].split('|')[0]
+    out['chrom2'] = ts[2].split('|')[1]
+    out['tstart2'] = int(ts[2].split('|')[2])
+    out['tend2'] = int(ts[2].split('|')[3])
     out['pos1'] = int(ts[5])
     out['pos2'] = int(ts[6])
     out['length1'] = int(ts[7])
@@ -233,6 +257,12 @@ def parse_tpdm_line(tpdmline):
     
     return out
     
+    
+def compare_transcripts(ttuple1, ttuple2):
+    return ttuple1[0] == ttuple2[0] and abs(ttuple1[2] - ttuple2[2]) < 125 and\
+           abs(ttuple1[3] - ttuple2[3]) < 125 and ttuple1[1] == ttuple2[1]
+    
+    
 def parse_line(efline):
     
     out = {}
@@ -241,11 +271,50 @@ def parse_line(efline):
     out['transcriptid'] = lseq[0]
     out['geneid'] = lseq[1]
     out['exonid'] = lseq[4]
+    out['chrom'] = '_'.join(lseq[4].split('_')[:-2])
     out['start'] = int(lseq[5])
     out['end'] = int(lseq[6])
+    out['transcriptstart'] = int(lseq[2])
+    out['transcriptend'] = int(lseq[3])
+    
     out['length'] = abs(out['start'] - out['end']) ##Add + 1 for Ensembl data!
 
+    exon_position = int(lseq[7])
+    
+    if exon_position == 1:
+        out['length'] += PREPENDED_SEQUENCE_LENGTH
     return out
+    
+class exon_graph_lookup(object):
+    
+    def __init__(self):
+        self._transcriptid_dict = {}
+        
+    def add_graph(self, transcriptid, chrom, start, end, egraph, ebounds):
+        
+        self._transcriptid_dict.setdefault(transcriptid, []).append(
+                    (chrom, start, end, egraph, ebounds)
+                    )
+                    
+    def __distance(self, start1, start2, end1, end2, chrom1, chrom2):
+        pad = 0
+        if chrom1 != chrom2:
+            pad += 1000000000
+        return abs(start1 - start2) + abs(end1 - end2) + pad
+        
+    def get_graph(self, transcriptid, chrom, start, end):
+        
+        egraphs = self._transcriptid_dict[transcriptid]
+        
+        if len(egraphs) == 1:
+            return egraphs[0][3:]
+            
+        egraphs.sort(key=lambda k:self.__distance(start,k[1],end,k[2],chrom,k[0]))
+        
+        print "Matching", transcriptid, chrom, start, end, "with", egraphs[0][:3] 
+        return egraphs[0][3:]
+
+
 
 def main(exonfilename, tpdmfilename, concordantfilename):
     
@@ -258,26 +327,34 @@ def main(exonfilename, tpdmfilename, concordantfilename):
 #==============================================================================
 #     First, build the exon_graph.
 #==============================================================================
-    exon_graph_d = {}
+    exon_graph_d = exon_graph_lookup()
     exon_graph = nx.DiGraph()
     
-    current_geneid = ""
+#    current_geneid = ""
     current_transcriptid = ""
-    current_exonid = ""    
+    current_chrom = ""
+    current_tstart = None
+    current_tend = None
+#    current_exonid = ""    
+    
+    current_exon_boundaries = None
     
     current_node = ""
     
     position_in_transcript = 0
-    exon_boundaries = {}
     
     for line in file(exonfilename):
         exon_d = parse_line(line)
                                     
-        if exon_d['transcriptid'] != current_transcriptid:
+        if (exon_d['transcriptid'], exon_d['chrom'], exon_d['transcriptstart'], exon_d['transcriptend']) != \
+            (current_transcriptid, current_chrom, current_tstart, current_tend):
             
             if current_transcriptid:
+                exon_graph.node[current_node]['length'] += POLY_A_LENGTH
                 exon_graph.add_edge(current_node, current_transcriptid + "sink")
-                exon_graph_d[current_transcriptid] = exon_graph
+                exon_graph_d.add_graph(current_transcriptid, current_chrom, 
+                                       current_tstart, current_tend, exon_graph,
+                                       current_exon_boundaries)
                 
             exon_graph = nx.DiGraph() ##Make a new exon_graph
             exon_graph.add_node(exon_d['transcriptid'] + "source", length = 0) ##Add its source and sink
@@ -285,22 +362,26 @@ def main(exonfilename, tpdmfilename, concordantfilename):
             
             current_node = exon_d['transcriptid'] + "source"
             current_transcriptid = exon_d['transcriptid']
+            current_chrom = exon_d["chrom"]
+            current_tstart = exon_d['transcriptstart']
+            current_tend = exon_d['transcriptend']
             position_in_transcript = 0
             
-            exon_boundaries[current_transcriptid] = {}
+            current_exon_boundaries = {}
         
         exon_graph.add_node(exon_d['exonid'], length = exon_d['length'])
 
         exon_graph.add_edge(current_node, exon_d['exonid'])
         current_node = exon_d['exonid']
         
-        exon_boundaries[current_transcriptid][exon_d['exonid']] = \
+        current_exon_boundaries[exon_d['exonid']] = \
             (position_in_transcript, position_in_transcript + exon_d['length'])
         position_in_transcript += exon_d['length']
         
-        
+    exon_graph.node[current_node]['length'] += POLY_A_LENGTH
     exon_graph.add_edge(current_node, current_transcriptid + "sink")
-    exon_graph_d[current_transcriptid] = exon_graph
+    exon_graph_d.add_graph(current_transcriptid, current_chrom, 
+            current_tstart, current_tend, exon_graph, current_exon_boundaries)
     
     print "Exon structures loaded."
 #===============================================================================
@@ -308,10 +389,15 @@ def main(exonfilename, tpdmfilename, concordantfilename):
 #===============================================================================
     
     current_transcript_pair = (None, None)
-    current_gene_pair = (None, None)
+    current_chrom_pair = (None, None)
+    current_tstart_pair = (None, None)
+    current_tend_pair = (None, None)
+#    current_gene_pair = (None, None)
     
     exon_graph1 = None
     exon_graph2 = None
+    exon_bounds1 = None
+    exon_bounds2 = None
     
     mapped_reads_1 = []
     mapped_reads_2 = []
@@ -319,32 +405,47 @@ def main(exonfilename, tpdmfilename, concordantfilename):
     outef = open(tpdmfilename + '.exons', 'w')
     read_set = set()
     linecount = 0
+    concordantcount = 0
     
     for line in file(tpdmfilename):
         
         linecount += 1
         if linecount % 500000 == 0: 
-            print linecount
+            print linecount, concordantcount
         
         tpdm_d = parse_tpdm_line(line)
 
         if tpdm_d['read_id'] in concordantset:
+            concordantcount += 1
             continue
         
-        if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair:
+        if (tpdm_d['transcript1'],tpdm_d['transcript2']) != current_transcript_pair or\
+           (tpdm_d['chrom1'],tpdm_d['chrom2']) != current_chrom_pair or\
+           (tpdm_d['tstart1'],tpdm_d['tstart2']) != current_tstart_pair or\
+           (tpdm_d['tend1'],tpdm_d['tend2']) != current_tend_pair:
             
             if current_transcript_pair[0] and len(read_set) >= MIN_MAPPING_COUNT:
                 write_exon_orders(exon_graph1, exon_graph2, 
                     current_transcript_pair[0],current_transcript_pair[1], 
-                    outef, mapped_reads_1, mapped_reads_2, exon_boundaries)
+                    outef, mapped_reads_1, mapped_reads_2, exon_bounds1,
+                    exon_bounds2)
                 
             current_transcript_pair = (tpdm_d['transcript1'],tpdm_d['transcript2'])
+            current_chrom_pair = (tpdm_d['chrom1'],tpdm_d['chrom2'])
+            current_tstart_pair = (tpdm_d['tstart1'],tpdm_d['tstart2'])
+            current_tend_pair = (tpdm_d['tend1'],tpdm_d['tend2'])
             
             mapped_reads_1 = []
             mapped_reads_2 = []
             
-            exon_graph1 = exon_graph_d[current_transcript_pair[0]]
-            exon_graph2 = exon_graph_d[current_transcript_pair[1]]
+            exon_graph1, exon_bounds1 = exon_graph_d.get_graph(current_transcript_pair[0],
+                                                 current_chrom_pair[0],
+                                                 current_tstart_pair[0],
+                                                 current_tend_pair[0])
+            exon_graph2, exon_bounds2 = exon_graph_d.get_graph(current_transcript_pair[1],
+                                                 current_chrom_pair[1],
+                                                 current_tstart_pair[1],
+                                                 current_tend_pair[1])
                     
             read_set = set()
 #===============================================================================
@@ -374,7 +475,7 @@ def main(exonfilename, tpdmfilename, concordantfilename):
     if len(read_set) > MIN_MAPPING_COUNT:
         write_exon_orders(exon_graph1, exon_graph2, current_transcript_pair[0], 
                 current_transcript_pair[1], outef, mapped_reads_1, 
-                mapped_reads_2, exon_boundaries)    
+                mapped_reads_2, exon_bounds1, exon_bounds2)   
         
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2], sys.argv[3])

@@ -20,6 +20,12 @@ def main(mapped_distance_file, ofile):
             curr_count += 1
         total_count +=1
         prob_dict[curr_val] = curr_count
+    
+    for i in range(25000):
+        if i in prob_dict:
+            prob_dict[i] += 1
+        else:
+            prob_dict[i] = 1
 
     for val in prob_dict:
         freq = prob_dict[val]

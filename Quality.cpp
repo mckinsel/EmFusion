@@ -29,5 +29,5 @@ void Quality::calculate_error_probabilites(){
 
 double Quality::phred_probability(int phredscore){
 //	cout << "phredscore " << phredscore << " " << phredscore/(long double)-10 << endl;
-	return pow(10, phredscore/(long double)-10);
+	return min(pow(10, phredscore/(long double)-10), .7);
 }

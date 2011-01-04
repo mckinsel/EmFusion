@@ -24,7 +24,7 @@ MarkovChain::~MarkovChain() {
 }
 
 void MarkovChain::add_sequence(string seqtoadd) {
-
+    cout << seqtoadd << endl;
 	for(unsigned int i=0; i<seqtoadd.length() - order; i++){
 		string_counts[seqtoadd.substr(i, order)]++;
 		total_count++;

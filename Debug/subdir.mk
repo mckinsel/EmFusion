@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../EM.cpp \
 ../EM_Map.cpp \
 ../FastaEntry.cpp \
+../Join.cpp \
 ../MarkovChain.cpp \
 ../Quality.cpp \
 ../Random_EM_Map.cpp \
@@ -20,6 +21,7 @@ OBJS += \
 ./EM.o \
 ./EM_Map.o \
 ./FastaEntry.o \
+./Join.o \
 ./MarkovChain.o \
 ./Quality.o \
 ./Random_EM_Map.o \
@@ -32,6 +34,7 @@ CPP_DEPS += \
 ./EM.d \
 ./EM_Map.d \
 ./FastaEntry.d \
+./Join.d \
 ./MarkovChain.d \
 ./Quality.d \
 ./Random_EM_Map.d \

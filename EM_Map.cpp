@@ -12,16 +12,21 @@
 
 EM_Map::EM_Map(BowtieEntry& bt1, BowtieEntry& bt2, int2doubleumap& d_prob, string2intumap& i_length) {
 
+    if(bt1.base_read_id != bt2.base_read_id) cout << bt1.base_read_id << " " << bt2.base_read_id << endl;
 	assert(bt1.base_read_id == bt2.base_read_id);
 	assert(bt1.mapping == bt2.mapping);
 
 	base_read_id = bt1.base_read_id;
 	isoform = bt1.mapping;
-	int start = min(bt1.position, bt2.position);
-	int end = max(bt1.position, bt2.position);
+	start = min(bt1.position, bt2.position);
+    if(bt1.position > bt2.position) {
+        end = bt1.position + bt1.read->sequence.length();
+    } else {
+        end = bt2.position + bt2.read->sequence.length();
+    }
 	isoform_length = i_length[isoform];
-//	cout << "start " << start << " end " << end << " absdiff " << abs(start - end) << " d " << d_prob[abs(start - end)] <<endl;
 	d = d_prob[abs(start - end)];
+//	cout << "start " << start << " end " << end << " absdiff " << abs(start - end) << " d " << d_prob[abs(start - end)] <<endl;
 	P = bt1.mapping_probability() * bt2.mapping_probability();
 
 
@@ -52,7 +57,8 @@ long double EM_Map::em_prob(long double theta_i) {
 }
 
 ostream& operator<<(ostream &stream, const EM_Map &emm) {
-	stream << emm.base_read_id << "\t" << emm.isoform << "\t" << emm.isoform_length << "\t" << setprecision(25) << emm.d << "\t" << emm.P << endl;
+	stream << emm.base_read_id << "\t" << emm.isoform << "\t" << emm.isoform_length << "\t" << emm.start <<
+	       "\t" << emm.end << "\t" << setprecision(25) << emm.d << "\t" << emm.P << endl;
 	return stream;
 }
 
@@ -60,6 +66,8 @@ istream& operator>>(istream &stream, EM_Map &emm) {
 	stream >> emm.base_read_id;
 	stream >> emm.isoform;
 	stream >> emm.isoform_length;
+	stream >> emm.start;
+	stream >> emm.end;
 	stream >> emm.d;
 	stream >> emm.P;
 //	cout << "read in a EM_Map " << emm.base_read_id << " " << emm.isoform << " " << emm.d << " " << emm.P << " " << emm.isoform_length << " " << emm.em_prob(1) << endl;
